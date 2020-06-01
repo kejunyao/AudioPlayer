@@ -291,6 +291,25 @@ int AudioOutput::resample() {
     return audio->dataSize;
 }
 
+void AudioOutput::release() {
+    if (pcmPlayerObject != NULL) {
+        (*pcmPlayerObject) ->Destroy(pcmPlayerObject);
+        pcmPlayerObject = NULL;
+        pcmPlayerPlay = NULL;
+        pcmBufferQueue = NULL;
+    }
+    if (outputMixObject != NULL) {
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = NULL;
+        outputMixEnvironmentalReverb = NULL;
+    }
+    if (engineObject != NULL) {
+        (*engineObject)->Destroy(engineObject);
+        engineObject = NULL;
+        engineEngine = NULL;
+    }
+}
+
 
 
 

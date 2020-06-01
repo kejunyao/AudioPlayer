@@ -14,6 +14,9 @@ AVPacketBlockQueue::AVPacketBlockQueue(PlayStatus *playStatus) {
 }
 
 AVPacketBlockQueue::~AVPacketBlockQueue() {
+    release();
+    pthread_attr_destroy(&mutex);
+    pthread_attr_destroy(&cond);
 }
 
 /**
@@ -63,4 +66,17 @@ int AVPacketBlockQueue::pop(AVPacket *packet) {
     }
     pthread_mutex_unlock(&mutex);
     return 0;
+}
+
+void AVPacketBlockQueue::release() {
+    pthread_cond_signal(&cond);
+    pthread_mutex_lock(&mutex);
+    while (!queue.empty()) {
+        AVPacket *packet = queue.front();
+        queue.pop();
+        av_packet_free(&packet);
+        av_free(packet);
+        packet = NULL;
+    }
+    pthread_mutex_unlock(&mutex);
 }

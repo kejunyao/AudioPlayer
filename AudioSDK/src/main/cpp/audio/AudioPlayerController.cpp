@@ -63,4 +63,27 @@ void AudioPlayerController::stop() {
 
 void AudioPlayerController::release() {
     playStatus->setExit(true);
+    if (audioOutput != NULL) {
+        audioOutput->stop();
+    }
+    if (audio != NULL) {
+        if (audio->queue != NULL) {
+            delete(audio->queue);
+            audio->queue = NULL;
+        }
+        audio->dataSize = 0;
+        if (audio->buffer != NULL) {
+            free(audio->buffer);
+            audio->buffer = NULL;
+        }
+        if (audio->avCodecContext != NULL) {
+            avcodec_close(audio->avCodecContext);
+            avcodec_free_context(&audio->avCodecContext);
+            av_free(audio->avCodecContext);
+            audio->avCodecContext = NULL;
+        }
+    }
+    if (audioOutput != NULL) {
+        audioOutput->release();
+    }
 }

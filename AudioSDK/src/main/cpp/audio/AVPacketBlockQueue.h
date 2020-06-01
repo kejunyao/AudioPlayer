@@ -22,6 +22,8 @@ private:
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     PlayStatus *playStatus;
+private:
+    void release();
 public:
     AVPacketBlockQueue(PlayStatus *playStatus);
     ~AVPacketBlockQueue();

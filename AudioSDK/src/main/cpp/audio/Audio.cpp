@@ -33,3 +33,7 @@ bool Audio::shouldRefresh() {
     }
     return false;
 }
+
+void Audio::release() {
+
+}

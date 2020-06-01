@@ -37,6 +37,7 @@ class Audio {
         void setSampleRate(int sampleRate);
         void updateClock();
         bool shouldRefresh();
+        void release();
 
 };
 
