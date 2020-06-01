@@ -7,10 +7,18 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/time_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="00:00/00:00"/>
+
     <Button
         android:id="@+id/start"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:onClick="start"
         android:text="开始"/>
 
@@ -18,6 +26,7 @@
         android:id="@+id/pause"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:onClick="pause"
         android:text="暂停"/>
 
@@ -25,6 +34,7 @@
         android:id="@+id/play"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:onClick="play"
         android:text="播放"/>
 

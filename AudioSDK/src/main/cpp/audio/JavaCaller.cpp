@@ -15,13 +15,13 @@ JavaCaller::JavaCaller(JavaVM *jvm, JNIEnv *env, jobject *instance) {
         }
         return;
     }
-    jmidPostEvent = jenv->GetMethodID(clz, "postEventFromNative", "(II)V");
+    jmidPostEvent = jenv->GetMethodID(clz, "postEventFromNative", "(III)V");
 }
 
 JavaCaller::~JavaCaller() {
 }
 
-void JavaCaller::callJavaMethod(bool isWorkThread, int event, int code) {
+void JavaCaller::callJavaMethod(bool isWorkThread, int event, int arg1, int arg2) {
     if (isWorkThread) {
         JNIEnv *env;
         if (jvm->AttachCurrentThread(&env, 0) != JNI_OK) {
@@ -29,11 +29,11 @@ void JavaCaller::callJavaMethod(bool isWorkThread, int event, int code) {
                 LOGE("Attach current thread failure.");
             }
         }
-        env->CallVoidMethod(instance, jmidPostEvent, event, code);
+        env->CallVoidMethod(instance, jmidPostEvent, event, arg1, arg2);
         jvm->DetachCurrentThread();
         return;
     }
-    jenv->CallVoidMethod(instance, jmidPostEvent, event, code);
+    jenv->CallVoidMethod(instance, jmidPostEvent, event, arg1, arg2);
 }
 
 

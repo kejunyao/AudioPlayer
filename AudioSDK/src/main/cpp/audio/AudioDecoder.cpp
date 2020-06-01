@@ -47,11 +47,17 @@ void AudioDecoder::prepare() {
 
     AVCodecParameters *codecParameters = NULL;
     for (int i = 0, size = avFormatContext->nb_streams; i < size; ++i) {
-        AVCodecParameters *parameters = avFormatContext->streams[i]->codecpar;
+        AVStream *streams = avFormatContext->streams[i];
+        AVCodecParameters *parameters = streams->codecpar;
         if (parameters->codec_type == AVMEDIA_TYPE_AUDIO) {
             if (audio->streamIndex == -1) {
                 audio->streamIndex = i;
                 audio->setSampleRate(parameters->sample_rate);
+                audio->duration = avFormatContext->duration / AV_TIME_BASE;
+                audio->timeBase = streams->time_base;
+                if (LOG_DEBUG) {
+                    LOGD("AudioDecoder#prepare, duration: %d, timeBase: %d", audio->duration, audio->timeBase);
+                }
                 codecParameters = parameters;
                 break;
             }
@@ -94,7 +100,7 @@ void AudioDecoder::prepare() {
         }
         return;
     }
-    javaCaller->callJavaMethod(true, EVENT_PREPARED, 0);
+    javaCaller->callJavaMethod(true, EVENT_PREPARED, 0, 0);
     if (LOG_DEBUG) {
         LOGD("AudioDecoder#prepare， 预备完成, source: %s", audio->source);
     }

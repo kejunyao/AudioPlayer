@@ -1,11 +1,6 @@
 package com.kejunyao.audio;
 
-import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
-import androidx.annotation.NonNull;
-
-import java.lang.ref.WeakReference;
 
 /**
  * 音频播放控Controller
@@ -28,40 +23,7 @@ public class AudioPlayer {
         System.loadLibrary("swscale-4");
     }
 
-    public interface OnPreparedListener {
-        void onPrepared(AudioPlayer player);
-    }
 
-    private class EventHandler extends Handler {
-        private final WeakReference<AudioPlayer> mAudioPlayerRef;
-        public EventHandler(AudioPlayer player, Looper looper) {
-            super(looper);
-            mAudioPlayerRef = new WeakReference<>(player);
-        }
-
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            switch (msg.what) {
-                case AUDIO_PREPARED:
-                    prepared();
-                    break;
-                case AUDIO_NOP:
-                default: {
-
-                }
-            }
-        }
-
-        private void prepared() {
-            OnPreparedListener preparedListener = mOnPreparedListener;
-            if (preparedListener != null) {
-                preparedListener.onPrepared(mAudioPlayerRef.get());
-            }
-        }
-    }
-
-    private static final int AUDIO_NOP = 0;
-    private static final int AUDIO_PREPARED = 1;
 
     private EventHandler mEventHandler;
 
@@ -76,21 +38,29 @@ public class AudioPlayer {
         }
     }
 
-    private OnPreparedListener mOnPreparedListener;
+    OnPreparedListener mOnPreparedListener;
     public void setOnPreparedListener(OnPreparedListener listener) {
         mOnPreparedListener = listener;
+    }
+
+    OnLoadListener mOnLoadListener;
+    public void setOnLoadListener(OnLoadListener listener) {
+        mOnLoadListener = listener;
+    }
+
+    OnPauseResumeListener mOnPauseResumeListener;
+    public void setOnPauseResumeListener(OnPauseResumeListener listener) {
+        mOnPauseResumeListener = listener;
+    }
+
+    OnTimeInfoListener mOnTimeInfoListener;
+    public void setOnTimeInfoListener(OnTimeInfoListener listener) {
+        mOnTimeInfoListener = listener;
     }
 
     private String mSource;
     public void setDataSource(String source) {
         mSource = source;
-//        final Uri uri = Uri.parse(path);
-//        final String scheme = uri.getScheme();
-//        if ("file".equals(scheme)) {
-//            return;
-//        }
-//        if (scheme != null) {
-//        }
     }
 
     public void prepare() {
@@ -103,21 +73,28 @@ public class AudioPlayer {
 
     public void pause() {
         _pause();
+        if (mEventHandler != null) {
+            mEventHandler.sendMessage(EventHandler.AUDIO_PAUSE);
+        }
     }
 
     public void resume() {
         _resume();
+        if (mEventHandler != null) {
+            mEventHandler.sendMessage(EventHandler.AUDIO_RESUME);
+        }
     }
 
     public void release() {
         mOnPreparedListener = null;
+        mOnLoadListener = null;
+        mOnPauseResumeListener = null;
         _release();
     }
 
-    private void postEventFromNative(int what, int code) {
+    private void postEventFromNative(int what, int arg1, int arg2) {
         if (mEventHandler != null) {
-            Message m = mEventHandler.obtainMessage(what, code, 0, null);
-            mEventHandler.sendMessage(m);
+            mEventHandler.sendMessage(what, arg1, arg2);
         }
     }
 

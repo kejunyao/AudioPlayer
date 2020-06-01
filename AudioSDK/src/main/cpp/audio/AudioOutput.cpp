@@ -21,6 +21,15 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
     if (output != NULL) {
         int bufferSize = output->resample();
         if (bufferSize > 0) {
+            output->audio->updateClock();
+            if (output->audio->shouldRefresh()) {
+                output->javaCaller->callJavaMethod(
+                        true,
+                        EVENT_TIME_INFO,
+                        output->audio->clock,
+                        output->audio->duration
+                        );
+            }
             (*output->pcmBufferQueue)->Enqueue(
                     output->pcmBufferQueue,
                     (char *) output->audio->buffer,
@@ -75,8 +84,11 @@ void AudioOutput::initOpenSLES() {
     const SLInterfaceID ids[1] = {SL_IID_BUFFERQUEUE};
     const SLboolean req[1] = {SL_BOOLEAN_TRUE};
 
-    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 1,
-                                       ids, req);
+    (*engineEngine)->CreateAudioPlayer(
+            engineEngine, &pcmPlayerObject,
+            &slDataSource, &audioSnk,
+            1, ids, req
+            );
     // 初始化播放器
     (*pcmPlayerObject)->Realize(pcmPlayerObject, SL_BOOLEAN_FALSE);
 
@@ -193,13 +205,13 @@ int AudioOutput::resample() {
         if(audio->queue->size() == 0) { // 加载中
             if(!playStatus->isLoad()) {
                 playStatus->setLoad(true);
-                javaCaller->callJavaMethod(true, EVENT_LOADING, 0);
+                javaCaller->callJavaMethod(true, EVENT_LOADING, 0, 0);
             }
             continue;
-        } else{
+        } else{ // 加载完成
             if(playStatus->isLoad()) {
                 playStatus->setLoad(false);
-                javaCaller->callJavaMethod(true, EVENT_LOADING, 1);
+                javaCaller->callJavaMethod(true, EVENT_LOADING, 1, 0);
             }
         }
         AVPacket *avPacket = av_packet_alloc();
@@ -251,6 +263,13 @@ int AudioOutput::resample() {
 
             int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
             audio->dataSize = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+
+            audio->nowTime = avFrame->pts * av_q2d(audio->timeBase);
+            if(audio->nowTime < audio->clock) {
+                audio->nowTime = audio->clock;
+            }
+            audio->clock = audio->nowTime;
+
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;

@@ -10,18 +10,34 @@
 #include "AVPacketBlockQueue.h"
 
 class Audio {
+    private:
+        double lastClock = 0;
+
     public:
         AVCodecContext *avCodecContext = NULL;
+        /** 音频文件来源，本地文件、服务器文件、服务器流 */
         const char* source = NULL;
         int streamIndex = -1;
         AVPacketBlockQueue *queue = NULL;
         uint8_t *buffer = NULL;
+        /** 数据大小 */
         int dataSize = 0;
+        /** 音频采样率 */
         int sampleRate = 0;
+        /** 音频时长（单位：秒） */
+        int duration = 0;
+        AVRational timeBase;
+        /** 当前时间 */
+        double nowTime = 0;
+        double clock = 0;
+
     public:
         Audio(const char* source, PlayStatus *playStatus);
         ~Audio();
         void setSampleRate(int sampleRate);
+        void updateClock();
+        bool shouldRefresh();
+
 };
 
 
