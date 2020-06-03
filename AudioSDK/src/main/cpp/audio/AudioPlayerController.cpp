@@ -15,6 +15,22 @@ AudioPlayerController::AudioPlayerController(JavaVM *javaVM, JNIEnv *env, jobjec
 }
 
 AudioPlayerController::~AudioPlayerController() {
+    if (audioOutput != NULL) {
+        free(audioOutput);
+        audioOutput = NULL;
+    }
+    if (audioDecoder != NULL) {
+        free(audioDecoder);
+        audioDecoder = NULL;
+    }
+    if (audio != NULL) {
+        free(audio);
+        audio = NULL;
+    }
+    if (playStatus != NULL) {
+        free(playStatus);
+        playStatus = NULL;
+    }
 }
 
 void AudioPlayerController::prepare(const char *source) {
@@ -64,26 +80,12 @@ void AudioPlayerController::stop() {
 void AudioPlayerController::release() {
     playStatus->setExit(true);
     if (audioOutput != NULL) {
-        audioOutput->stop();
+        audioOutput->release();
+    }
+    if (audioDecoder != NULL) {
+        audioDecoder->release();
     }
     if (audio != NULL) {
-        if (audio->queue != NULL) {
-            delete(audio->queue);
-            audio->queue = NULL;
-        }
-        audio->dataSize = 0;
-        if (audio->buffer != NULL) {
-            free(audio->buffer);
-            audio->buffer = NULL;
-        }
-        if (audio->avCodecContext != NULL) {
-            avcodec_close(audio->avCodecContext);
-            avcodec_free_context(&audio->avCodecContext);
-            av_free(audio->avCodecContext);
-            audio->avCodecContext = NULL;
-        }
-    }
-    if (audioOutput != NULL) {
-        audioOutput->release();
+        audio->release();
     }
 }

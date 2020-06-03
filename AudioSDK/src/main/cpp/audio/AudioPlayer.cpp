@@ -59,13 +59,25 @@ Java_com_kejunyao_audio_AudioPlayer__1stop(JNIEnv *env, jobject thiz) {
     playerController->stop();
 }
 
+pthread_t threadRelease;
+
+void *releaseCallback(void *data) {
+    if (playerController != NULL) {
+        playerController->release();
+        free(playerController);
+        playerController == NULL;
+    }
+    pthread_exit(&threadRelease);
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_kejunyao_audio_AudioPlayer__1release(JNIEnv *env, jobject thiz) {
     if (playerController == NULL) {
         return;
     }
-    playerController->release();
+    pthread_create(&threadRelease, NULL, releaseCallback, NULL);
+
 }
 
 extern "C"

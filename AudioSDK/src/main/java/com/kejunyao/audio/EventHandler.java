@@ -16,12 +16,13 @@ class EventHandler extends Handler {
 
     private static final String TAG = "EventHandler";
 
-    static final int AUDIO_NOP       = 0;
-    static final int AUDIO_PREPARED  = 1;
-    static final int AUDIO_LOADING   = 2;
-    static final int AUDIO_PAUSE     = 3;
-    static final int AUDIO_RESUME    = 4;
-    static final int AUDIO_TIME_INFO = 5;
+    static final int EVENT_NOP       = 0;
+    static final int EVENT_PREPARED  = 1;
+    static final int EVENT_LOADING   = 2;
+    static final int EVENT_PAUSE     = 3;
+    static final int EVENT_RESUME    = 4;
+    static final int EVENT_TIME_INFO = 5;
+    static final int EVENT_ERROR     = 6;
 
     private final WeakReference<AudioPlayer> mAudioPlayerRef;
     public EventHandler(AudioPlayer player, Looper looper) {
@@ -32,20 +33,20 @@ class EventHandler extends Handler {
     @Override
     public void handleMessage(@NonNull Message msg) {
         switch (msg.what) {
-            case AUDIO_PREPARED:
+            case EVENT_PREPARED:
                 onPrepared();
                 break;
-            case AUDIO_LOADING:
+            case EVENT_LOADING:
                 onLoad(msg.arg1 == 0);
                 break;
-            case AUDIO_PAUSE:
-            case AUDIO_RESUME:
-                onPauseResume(msg.what == AUDIO_PAUSE);
+            case EVENT_PAUSE:
+            case EVENT_RESUME:
+                onPauseResume(msg.what == EVENT_PAUSE);
                 break;
-            case AUDIO_TIME_INFO:
+            case EVENT_TIME_INFO:
                 onTimeInfo(msg.arg1, msg.arg2);
                 break;
-            case AUDIO_NOP:
+            case EVENT_NOP:
                 break;
             default:
                 AudioLog.e(TAG, "Unknown message type ", msg.what);

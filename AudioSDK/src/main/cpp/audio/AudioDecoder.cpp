@@ -14,6 +14,7 @@ AudioDecoder::AudioDecoder(JavaCaller *javaCaller, PlayStatus *playStatus, Audio
 }
 
 AudioDecoder::~AudioDecoder() {
+    release();
 }
 
 void *prepareCallback(void *data) {
@@ -26,11 +27,23 @@ void AudioDecoder::prepareAsync() {
     pthread_create(&threadDecode, NULL, prepareCallback, this);
 }
 
+int avFormatCallback(void *ctx) {
+    AudioDecoder *decoder = (AudioDecoder*) ctx;
+    if (decoder->playStatus == NULL || decoder->playStatus->isExit()) {
+        return AVERROR_EOF;
+    }
+    return 0;
+}
+
 void AudioDecoder::prepare() {
     av_register_all();
     avformat_network_init();
     avFormatContext = avformat_alloc_context();
+    avFormatContext->interrupt_callback.callback = avFormatCallback;
+    avFormatContext->interrupt_callback.opaque = this;
+
     if (avformat_open_input(&avFormatContext, audio->source, NULL, NULL) != 0) {
+        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_FORMAT_OPEN_INPUT, 0);
         // TODO 向外发送错误通知
         if (LOG_DEBUG) {
             LOGE("AudioDecoder#prepare, avformat_open_input failure, source: %s", audio->source);
@@ -38,6 +51,7 @@ void AudioDecoder::prepare() {
         return;
     }
     if (avformat_find_stream_info(avFormatContext, NULL) < 0) {
+        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_STREAM_FORMAT_NOT_FOUND, 0);
         // TODO 向外发送错误通知
         if (LOG_DEBUG) {
             LOGE("AudioDecoder#prepare, avformat_find_stream_info failure, source: %s", audio->source);
@@ -64,6 +78,7 @@ void AudioDecoder::prepare() {
         }
     }
     if (audio->streamIndex == -1 || codecParameters == NULL) {
+        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_MEDIA_TYPE_NOT_FOUND, 0);
         // TODO 向外发送错误通知
         if (LOG_DEBUG) {
             LOGE("AudioDecoder#prepare, find AVCodecParameters failure, source: %s", audio->source);
@@ -72,6 +87,7 @@ void AudioDecoder::prepare() {
     }
     AVCodec *decoder = avcodec_find_decoder(codecParameters->codec_id);
     if (!decoder) {
+        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_DECODER_NOT_FOUND, 0);
         // TODO 向外发送错误通知
         if (LOG_DEBUG) {
             LOGE("AudioDecoder#prepare, avcodec_find_decoder failure, source: %s", audio->source);
@@ -80,6 +96,7 @@ void AudioDecoder::prepare() {
     }
     audio->avCodecContext = avcodec_alloc_context3(decoder);
     if (!audio->avCodecContext) {
+        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_ALLOC_CONTEXT3, 0);
         // TODO 向外发送错误通知
         if (LOG_DEBUG) {
             LOGE("AudioDecoder#prepare, avcodec_alloc_context3 failure, source: %s", audio->source);
@@ -87,6 +104,7 @@ void AudioDecoder::prepare() {
         return;
     }
     if (avcodec_parameters_to_context(audio->avCodecContext, codecParameters) < 0) {
+        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_PARAMETERS_CONTEXT, 0);
         // TODO 向外发送错误通知
         if (LOG_DEBUG) {
             LOGE("AudioDecoder#prepare, avcodec_parameters_to_context failure, source: %s", audio->source);
@@ -94,6 +112,7 @@ void AudioDecoder::prepare() {
         return;
     }
     if (avcodec_open2(audio->avCodecContext, decoder, 0) != 0) {
+        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_OPEN2, 0);
         // TODO 向外发送错误通知
         if (LOG_DEBUG) {
             LOGE("AudioDecoder#prepare, avcodec_open2 failure, source: %s", audio->source);
@@ -145,6 +164,18 @@ void AudioDecoder::decode() {
     }
     if (LOG_DEBUG) {
         LOGD("AudioDecoder#decode， 解码完成, source: %s, 总共解码 %d 帧", audio->source, audio->queue->size());
+    }
+}
+
+void AudioDecoder::release() {
+    if (playStatus != NULL && playStatus->isExit()) {
+        return;
+    }
+    if (avFormatContext != NULL) {
+        avformat_close_input(&avFormatContext);
+        avformat_free_context(avFormatContext);
+        av_free(avFormatContext);
+        avFormatContext = NULL;
     }
 }
 

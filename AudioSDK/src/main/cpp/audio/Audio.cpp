@@ -13,6 +13,7 @@ Audio::Audio(const char* source, PlayStatus *playStatus) {
 }
 
 Audio::~Audio() {
+    release();
 }
 
 void Audio::setSampleRate(int sampleRate) {
@@ -35,5 +36,18 @@ bool Audio::shouldRefresh() {
 }
 
 void Audio::release() {
-
+    if (buffer != NULL) {
+        free(buffer);
+        buffer = NULL;
+    }
+    if (queue != NULL) {
+        free(queue);
+        queue = NULL;
+    }
+    if (avCodecContext != NULL) {
+        avcodec_close(avCodecContext);
+        avcodec_free_context(&avCodecContext);
+        av_free(avCodecContext);
+        avCodecContext = NULL;
+    }
 }

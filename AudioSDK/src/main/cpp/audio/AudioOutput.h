@@ -12,6 +12,8 @@
 #include "PlayStatus.h"
 #include "JavaCaller.h"
 #include "../AndroidLog.h"
+#include "EventCode.h"
+#include "ErrorCode.h"
 
 extern "C" {
 #include "libavcodec/avcodec.h"

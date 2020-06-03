@@ -155,7 +155,9 @@ int AudioOutput::getCurrentSampleRateForOpenSLES(int sampleRate) {
 void *playCallback(void *data) {
     AudioOutput *out = (AudioOutput*) data;
     out->initOpenSLES();
-    pthread_exit(&out->threadPlay);
+    if (out->threadPlay != NULL) {
+        pthread_exit(&out->threadPlay);
+    }
 }
 
 void AudioOutput::play() {

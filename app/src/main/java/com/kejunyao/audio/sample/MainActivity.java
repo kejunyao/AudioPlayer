@@ -74,4 +74,12 @@ public class MainActivity extends AppCompatActivity {
     public void play(View view) {
         mAudioPlayer.resume();
     }
+
+    public void stop(View view) {
+        mAudioPlayer.stop();
+    }
+
+    public void togglePlayStop(View view) {
+
+    }
 }

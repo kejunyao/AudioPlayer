@@ -25,6 +25,7 @@ class AudioPlayerController {
         AudioDecoder *audioDecoder = NULL;
         AudioOutput *audioOutput = NULL;
         JavaCaller *javaCaller = NULL;
+
     public:
         AudioPlayerController(JavaVM *javaVM, JNIEnv *env, jobject *instance);
         ~AudioPlayerController();

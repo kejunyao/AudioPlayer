@@ -71,21 +71,26 @@ public class AudioPlayer {
         _start();
     }
 
-    public void pause() {
-        _pause();
-        if (mEventHandler != null) {
-            mEventHandler.sendMessage(EventHandler.AUDIO_PAUSE);
-        }
-    }
-
     public void resume() {
         _resume();
         if (mEventHandler != null) {
-            mEventHandler.sendMessage(EventHandler.AUDIO_RESUME);
+            mEventHandler.sendMessage(EventHandler.EVENT_RESUME);
         }
     }
 
-    public void release() {
+    public void pause() {
+        _pause();
+        if (mEventHandler != null) {
+            mEventHandler.sendMessage(EventHandler.EVENT_PAUSE);
+        }
+    }
+
+    public void stop() {
+        _stop();
+        _release();
+    }
+
+    private void release() {
         mOnPreparedListener = null;
         mOnLoadListener = null;
         mOnPauseResumeListener = null;
@@ -105,5 +110,6 @@ public class AudioPlayer {
     private native void _stop();
     private native void _release();
     public native boolean isPlaying();
+
 
 }

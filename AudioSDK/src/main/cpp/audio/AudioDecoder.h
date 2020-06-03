@@ -13,6 +13,8 @@
 #include "../AndroidLog.h"
 #include "Audio.h"
 #include "JavaCaller.h"
+#include "EventCode.h"
+#include "ErrorCode.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -22,7 +24,6 @@ extern "C" {
 
 class AudioDecoder {
 private:
-    PlayStatus *playStatus;
     Audio *audio = NULL;
     JavaCaller *javaCaller;
     AVFormatContext *avFormatContext = NULL;
@@ -31,6 +32,7 @@ private:
     // AVFrame *avFrame = NULL;
 
 public:
+    PlayStatus *playStatus;
     pthread_t threadDecode;
 
 public:
@@ -46,6 +48,7 @@ public:
 
     void decodeAsync();
 
+    void release();
 
 };
 

@@ -15,8 +15,8 @@ AVPacketBlockQueue::AVPacketBlockQueue(PlayStatus *playStatus) {
 
 AVPacketBlockQueue::~AVPacketBlockQueue() {
     release();
-    pthread_attr_destroy(&mutex);
-    pthread_attr_destroy(&cond);
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&cond);
 }
 
 /**
