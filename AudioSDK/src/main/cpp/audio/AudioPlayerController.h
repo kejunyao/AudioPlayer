@@ -25,6 +25,16 @@ class AudioPlayerController {
         AudioDecoder *audioDecoder = NULL;
         AudioOutput *audioOutput = NULL;
         JavaCaller *javaCaller = NULL;
+    private:
+        pthread_mutex_t mutexReleasing;
+        pthread_mutex_t mutexWorking;
+        bool releasing = false;
+        bool working = false;
+    private:
+        bool isReleasing();
+        void setReleasing(bool releasing);
+        bool isWorking();
+        void setWorking(bool working);
 
     public:
         AudioPlayerController(JavaVM *javaVM, JNIEnv *env, jobject *instance);

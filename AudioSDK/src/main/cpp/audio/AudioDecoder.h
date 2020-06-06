@@ -17,16 +17,20 @@
 #include "ErrorCode.h"
 
 extern "C" {
-#include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-#include <libswresample/swresample.h>
+    #include <libavformat/avformat.h>
+    #include <libavcodec/avcodec.h>
+    #include <libavutil/time.h>
 }
 
 class AudioDecoder {
 private:
+    pthread_mutex_t mutex;
     Audio *audio = NULL;
     JavaCaller *javaCaller;
     AVFormatContext *avFormatContext = NULL;
+    bool exit = false;
+private:
+    bool isExit();
     // AVCodecParameters *codecpar = NULL;
     // VPacket *avPacket = NULL;
     // AVFrame *avFrame = NULL;

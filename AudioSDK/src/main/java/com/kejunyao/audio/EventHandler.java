@@ -46,6 +46,9 @@ class EventHandler extends Handler {
             case EVENT_TIME_INFO:
                 onTimeInfo(msg.arg1, msg.arg2);
                 break;
+            case EVENT_ERROR:
+                onError(msg.arg1);
+                break;
             case EVENT_NOP:
                 break;
             default:
@@ -88,6 +91,16 @@ class EventHandler extends Handler {
         AudioPlayer player = mAudioPlayerRef.get();
         if (player != null && player.mOnTimeInfoListener != null) {
             player.mOnTimeInfoListener.onTimeInfo(currentTime, totalTime);
+        }
+    }
+
+    private void onError(int errCode) {
+        AudioPlayer player = mAudioPlayerRef.get();
+        if (player != null) {
+            player.stop();
+            if (player.mOnErrorListener != null) {
+                player.mOnErrorListener.onError(errCode);
+            }
         }
     }
 

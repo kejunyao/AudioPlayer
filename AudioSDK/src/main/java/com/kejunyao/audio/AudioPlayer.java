@@ -58,6 +58,11 @@ public class AudioPlayer {
         mOnTimeInfoListener = listener;
     }
 
+    OnErrorListener mOnErrorListener;
+    public void setOnErrorListener(OnErrorListener listener) {
+        mOnErrorListener = listener;
+    }
+
     private String mSource;
     public void setDataSource(String source) {
         mSource = source;

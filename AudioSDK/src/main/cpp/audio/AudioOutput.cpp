@@ -204,6 +204,9 @@ void AudioOutput::checkChannels(AVFrame *frame) {
 
 int AudioOutput::resample() {
     while(playStatus != NULL && !playStatus->isExit()) {
+        if (audio == NULL) {
+            return 0;
+        }
         if(audio->queue->size() == 0) { // 加载中
             if(!playStatus->isLoad()) {
                 playStatus->setLoad(true);

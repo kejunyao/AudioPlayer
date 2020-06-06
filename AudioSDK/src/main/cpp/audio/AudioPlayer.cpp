@@ -8,10 +8,6 @@
 #include <string>
 #include "AudioPlayerController.h"
 
-extern "C" {
-    #include <libavformat/avformat.h>
-}
-
 JavaVM *javaVM = NULL;
 
 extern "C"
@@ -64,8 +60,8 @@ pthread_t threadRelease;
 void *releaseCallback(void *data) {
     if (playerController != NULL) {
         playerController->release();
-        free(playerController);
-        playerController == NULL;
+        delete(playerController);
+        playerController = NULL;
     }
     pthread_exit(&threadRelease);
 }

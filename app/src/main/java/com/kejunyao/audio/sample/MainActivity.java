@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.kejunyao.audio.AudioLog;
 import com.kejunyao.audio.AudioPlayer;
+import com.kejunyao.audio.OnErrorListener;
 import com.kejunyao.audio.OnLoadListener;
 import com.kejunyao.audio.OnPauseResumeListener;
 import com.kejunyao.audio.OnPreparedListener;
@@ -58,6 +59,12 @@ public class MainActivity extends AppCompatActivity {
             public void onTimeInfo(int currentTime, int totalTime) {
                 mTimeInfoView.setText(TimeUtils.toTimeText(currentTime, totalTime));
                 AudioLog.d(TAG, "onTimeInfo, currentTime: ", currentTime, ", totalTime: ", totalTime);
+            }
+        });
+        mAudioPlayer.setOnErrorListener(new OnErrorListener() {
+            @Override
+            public void onError(int errCode) {
+                AudioLog.d(TAG, "错误码：", errCode);
             }
         });
     }

@@ -13,6 +13,8 @@ PlayStatus::PlayStatus() {
 }
 
 PlayStatus::~PlayStatus() {
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&cond);
 }
 
 bool PlayStatus::isExit() {

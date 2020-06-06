@@ -11,10 +11,19 @@ AudioDecoder::AudioDecoder(JavaCaller *javaCaller, PlayStatus *playStatus, Audio
     this->javaCaller = javaCaller;
     this->playStatus = playStatus;
     this->audio = audio;
+    pthread_mutex_init(&mutex, NULL);
 }
 
 AudioDecoder::~AudioDecoder() {
-    release();
+    pthread_mutex_destroy(&mutex);
+}
+
+bool AudioDecoder::isExit() {
+    bool result;
+    pthread_mutex_lock(&mutex);
+    result = this->exit;
+    pthread_mutex_unlock(&mutex);
+    return result;
 }
 
 void *prepareCallback(void *data) {
@@ -36,6 +45,7 @@ int avFormatCallback(void *ctx) {
 }
 
 void AudioDecoder::prepare() {
+    pthread_mutex_lock(&mutex);
     av_register_all();
     avformat_network_init();
     avFormatContext = avformat_alloc_context();
@@ -43,24 +53,30 @@ void AudioDecoder::prepare() {
     avFormatContext->interrupt_callback.opaque = this;
 
     if (avformat_open_input(&avFormatContext, audio->source, NULL, NULL) != 0) {
-        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_FORMAT_OPEN_INPUT, 0);
-        // TODO 向外发送错误通知
+        if (javaCaller != NULL) {
+            javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_FORMAT_OPEN_INPUT, 0);
+        }
+        exit = true;
+        pthread_mutex_unlock(&mutex);
         if (LOG_DEBUG) {
-            LOGE("AudioDecoder#prepare, avformat_open_input failure, source: %s", audio->source);
+            LOGE("AudioDecoder#prepare, avformat_open_input failure");
         }
         return;
     }
     if (avformat_find_stream_info(avFormatContext, NULL) < 0) {
-        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_STREAM_FORMAT_NOT_FOUND, 0);
-        // TODO 向外发送错误通知
+        if (javaCaller != NULL) {
+            javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_STREAM_FORMAT_NOT_FOUND, 0);
+        }
+        exit = true;
+        pthread_mutex_unlock(&mutex);
         if (LOG_DEBUG) {
-            LOGE("AudioDecoder#prepare, avformat_find_stream_info failure, source: %s", audio->source);
+            LOGE("AudioDecoder#prepare, avformat_find_stream_info failure");
         }
         return;
     }
 
     AVCodecParameters *codecParameters = NULL;
-    for (int i = 0, size = avFormatContext->nb_streams; i < size; ++i) {
+    for (int i = 0, size = avFormatContext->nb_streams; i < size; i++) {
         AVStream *streams = avFormatContext->streams[i];
         AVCodecParameters *parameters = streams->codecpar;
         if (parameters->codec_type == AVMEDIA_TYPE_AUDIO) {
@@ -70,7 +86,7 @@ void AudioDecoder::prepare() {
                 audio->duration = avFormatContext->duration / AV_TIME_BASE;
                 audio->timeBase = streams->time_base;
                 if (LOG_DEBUG) {
-                    LOGD("AudioDecoder#prepare, duration: %d, timeBase: %d", audio->duration, audio->timeBase);
+                    LOGD("AudioDecoder#prepare, find AVCodecParameters");
                 }
                 codecParameters = parameters;
                 break;
@@ -78,50 +94,71 @@ void AudioDecoder::prepare() {
         }
     }
     if (audio->streamIndex == -1 || codecParameters == NULL) {
-        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_MEDIA_TYPE_NOT_FOUND, 0);
-        // TODO 向外发送错误通知
+        if (javaCaller != NULL) {
+            javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_MEDIA_TYPE_NOT_FOUND, 0);
+        }
+        exit = true;
+        pthread_mutex_unlock(&mutex);
         if (LOG_DEBUG) {
-            LOGE("AudioDecoder#prepare, find AVCodecParameters failure, source: %s", audio->source);
+            LOGE("AudioDecoder#prepare, find AVCodecParameters failure");
         }
         return;
     }
     AVCodec *decoder = avcodec_find_decoder(codecParameters->codec_id);
     if (!decoder) {
-        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_DECODER_NOT_FOUND, 0);
-        // TODO 向外发送错误通知
-        if (LOG_DEBUG) {
-            LOGE("AudioDecoder#prepare, avcodec_find_decoder failure, source: %s", audio->source);
+        if (javaCaller != NULL) {
+            javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_DECODER_NOT_FOUND, 0);
         }
+        if (LOG_DEBUG) {
+            LOGE("AudioDecoder#prepare, avcodec_find_decoder failure");
+        }
+        exit = true;
+        pthread_mutex_unlock(&mutex);
         return;
     }
     audio->avCodecContext = avcodec_alloc_context3(decoder);
     if (!audio->avCodecContext) {
-        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_ALLOC_CONTEXT3, 0);
-        // TODO 向外发送错误通知
-        if (LOG_DEBUG) {
-            LOGE("AudioDecoder#prepare, avcodec_alloc_context3 failure, source: %s", audio->source);
+        if (javaCaller != NULL) {
+            javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_ALLOC_CONTEXT3, 0);
         }
+        if (LOG_DEBUG) {
+            LOGE("AudioDecoder#prepare, avcodec_alloc_context3 failure");
+        }
+        exit = true;
+        pthread_mutex_unlock(&mutex);
         return;
     }
     if (avcodec_parameters_to_context(audio->avCodecContext, codecParameters) < 0) {
-        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_PARAMETERS_CONTEXT, 0);
-        // TODO 向外发送错误通知
+        if (javaCaller != NULL) {
+            javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_PARAMETERS_CONTEXT, 0);
+        }
+        exit = true;
+        pthread_mutex_unlock(&mutex);
         if (LOG_DEBUG) {
-            LOGE("AudioDecoder#prepare, avcodec_parameters_to_context failure, source: %s", audio->source);
+            LOGE("AudioDecoder#prepare, avcodec_parameters_to_context failure");
         }
         return;
     }
     if (avcodec_open2(audio->avCodecContext, decoder, 0) != 0) {
-        javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_OPEN2, 0);
-        // TODO 向外发送错误通知
+        if (javaCaller != NULL) {
+            javaCaller->callJavaMethod(true, EVENT_ERROR, ERROR_AV_CODEC_OPEN2, 0);
+        }
+        exit = true;
+        pthread_mutex_unlock(&mutex);
         if (LOG_DEBUG) {
-            LOGE("AudioDecoder#prepare, avcodec_open2 failure, source: %s", audio->source);
+            LOGE("AudioDecoder#prepare, avcodec_open2 failure");
         }
         return;
     }
-    javaCaller->callJavaMethod(true, EVENT_PREPARED, 0, 0);
+    if (javaCaller != NULL) {
+        javaCaller->callJavaMethod(true, EVENT_PREPARED, 0, 0);
+    }
+    if (playStatus == NULL || playStatus->isExit()) {
+        exit = true;
+    }
+    pthread_mutex_unlock(&mutex);
     if (LOG_DEBUG) {
-        LOGD("AudioDecoder#prepare， 预备完成, source: %s", audio->source);
+        LOGD("AudioDecoder#prepare， 预备完成");
     }
 }
 
@@ -137,11 +174,20 @@ void AudioDecoder::decodeAsync() {
 
 void AudioDecoder::decode() {
     if (LOG_DEBUG) {
-        LOGD("AudioDecoder#decode， 开始解码, source: %s", audio->source);
+        LOGD("AudioDecoder::decode()， 开始解码");
     }
     while (playStatus != NULL && !playStatus->isExit()) {
+        if (avFormatContext == NULL) {
+            break;
+        }
         AVPacket *avPacket = av_packet_alloc();
         if(av_read_frame(avFormatContext, avPacket) == 0) {
+            if (audio == NULL || audio->queue == NULL) {
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+                avPacket = NULL;
+                break;
+            }
             if (avPacket->stream_index == audio->streamIndex) {
                 audio->queue->push(avPacket);
             } else {
@@ -154,7 +200,7 @@ void AudioDecoder::decode() {
             av_free(avPacket);
             avPacket = NULL;
             while (playStatus != NULL && !playStatus->isExit()) {
-                if (audio->queue->size() > 0) {
+                if (audio != NULL && audio->queue != NULL && audio->queue->size() > 0) {
                     continue;
                 }
                 playStatus->setExit(true);
@@ -162,14 +208,24 @@ void AudioDecoder::decode() {
             }
         }
     }
+    exit = true;
     if (LOG_DEBUG) {
-        LOGD("AudioDecoder#decode， 解码完成, source: %s, 总共解码 %d 帧", audio->source, audio->queue->size());
+        LOGD("AudioDecoder#decode，解码完成。");
     }
 }
 
 void AudioDecoder::release() {
-    if (playStatus != NULL && playStatus->isExit()) {
-        return;
+    pthread_mutex_lock(&mutex);
+    int sleepCount = 0;
+    while (!exit) {
+        if(sleepCount > 1000) {
+            exit = true;
+        }
+        if(LOG_DEBUG) {
+            LOGE("wait ffmpeg  exit %d", sleepCount);
+        }
+        sleepCount++;
+        av_usleep(1000 * 10);//暂停10毫秒
     }
     if (avFormatContext != NULL) {
         avformat_close_input(&avFormatContext);
@@ -177,8 +233,17 @@ void AudioDecoder::release() {
         av_free(avFormatContext);
         avFormatContext = NULL;
     }
+    if (playStatus != NULL) {
+        playStatus = NULL;
+    }
+    if (javaCaller != NULL) {
+        javaCaller = NULL;
+    }
+    if (audio != NULL) {
+        audio = NULL;
+    }
+    pthread_mutex_unlock(&mutex);
 }
-
 
 
 

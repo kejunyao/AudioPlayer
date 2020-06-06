@@ -13,7 +13,6 @@ Audio::Audio(const char* source, PlayStatus *playStatus) {
 }
 
 Audio::~Audio() {
-    release();
 }
 
 void Audio::setSampleRate(int sampleRate) {
@@ -41,7 +40,8 @@ void Audio::release() {
         buffer = NULL;
     }
     if (queue != NULL) {
-        free(queue);
+        queue->release();
+        delete(queue);
         queue = NULL;
     }
     if (avCodecContext != NULL) {
