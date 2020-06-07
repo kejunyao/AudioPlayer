@@ -142,6 +142,20 @@ void AudioPlayerController::setVolume(float percent) {
     audioOutput->setVolume(percent);
 }
 
+
+void AudioPlayerController::setMute(int mute) {
+    if (isReleasing()) {
+        return;
+    }
+    if (!isWorking()) {
+        return;
+    }
+    if (audioOutput == NULL) {
+        return;
+    }
+    audioOutput->setMute(mute);
+}
+
 void AudioPlayerController::release() {
     if (isReleasing()) {
         return;
@@ -182,7 +196,6 @@ void AudioPlayerController::release() {
         LOGD("AudioPlayerController::release() 完成。");
     }
 }
-
 
 
 

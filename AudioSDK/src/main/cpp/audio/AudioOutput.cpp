@@ -21,13 +21,15 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
     if (output != NULL) {
         int bufferSize = output->resample();
         if (bufferSize > 0) {
-            output->audio->updateClock();
+            output->audio->updateClock(bufferSize);
+            int current = output->audio->clock;
+            int total = output->audio->durationInSecond;
             if (output->audio->shouldRefresh()) {
                 output->javaCaller->callJavaMethod(
                         true,
                         EVENT_TIME_INFO,
-                        output->audio->clock,
-                        output->audio->durationInSecond()
+                        current,
+                        total
                         );
             }
             (*output->pcmBufferQueue)->Enqueue(
@@ -80,9 +82,9 @@ void AudioOutput::initOpenSLES() {
     };
     SLDataSource slDataSource = {&android_queue, &pcm};
 
-    const int LENGTH = 2;
-    const SLInterfaceID ids[LENGTH] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
-    const SLboolean req[LENGTH] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    const int LENGTH = 3;
+    const SLInterfaceID ids[LENGTH] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_MUTESOLO};
+    const SLboolean req[LENGTH] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
     (*engineEngine)->CreateAudioPlayer(
             engineEngine,
@@ -98,7 +100,11 @@ void AudioOutput::initOpenSLES() {
     // 得到接口后调用  获取Player接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_PLAY, &pcmPlayerPlay);
 
+    // 获取音道借口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_VOLUME, &pcmVolumePlay);
+
+    // 获取声道接口
+    (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_MUTESOLO, &pcmMutePlay);
 
     // 注册回调缓冲区 获取缓冲队列接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_BUFFERQUEUE, &pcmBufferQueue);
@@ -255,6 +261,7 @@ void AudioOutput::checkChannels(AVFrame *frame) {
 }
 
 int AudioOutput::resample() {
+    int bufferSize = 0;
     while(playStatus != NULL && !playStatus->isExit()) {
         if (audio == NULL) {
             return 0;
@@ -319,7 +326,7 @@ int AudioOutput::resample() {
                     avFrame->nb_samples);
 
             int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
-            audio->dataSize = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+            bufferSize = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
 
             audio->nowTime = avFrame->pts * av_q2d(audio->timeBase);
             if(audio->nowTime < audio->clock) {
@@ -345,7 +352,31 @@ int AudioOutput::resample() {
             continue;
         }
     }
-    return audio->dataSize;
+    return bufferSize;
+}
+
+void AudioOutput::setMute(int mute) {
+    this->mute = mute;
+    if (pcmMutePlay == NULL) {
+        return;
+    }
+    switch (mute) {
+        case 0: { // 右声道
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 1, false);
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 0, true);
+            break;
+        }
+        case 1: { // 左声道
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 1, true);
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 0, false);
+            break;
+        }
+        default: { // 立体声
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 1, false);
+            (*pcmMutePlay)->SetChannelMute(pcmMutePlay, 0, false);
+            break;
+        }
+    }
 }
 
 void AudioOutput::release() {
@@ -365,7 +396,14 @@ void AudioOutput::release() {
         engineObject = NULL;
         engineEngine = NULL;
     }
+    if (pcmVolumePlay != NULL) {
+        pcmVolumePlay = NULL;
+    }
+    if (pcmMutePlay != NULL) {
+        pcmMutePlay = NULL;
+    }
 }
+
 
 
 

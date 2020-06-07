@@ -121,3 +121,12 @@ Java_com_kejunyao_audio_AudioPlayer__1setVolume(JNIEnv *env, jobject thiz, jfloa
     }
     playerController->setVolume(percent);
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_kejunyao_audio_AudioPlayer__1setMute(JNIEnv *env, jobject thiz, jint mute) {
+    if (playerController == NULL) {
+        return;
+    }
+    playerController->setMute(mute);
+}

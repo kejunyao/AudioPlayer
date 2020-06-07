@@ -6,9 +6,11 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.kejunyao.audio.AudioLog;
 import com.kejunyao.audio.AudioPlayer;
+import com.kejunyao.audio.Mute;
 import com.kejunyao.audio.OnCompleteListener;
 import com.kejunyao.audio.OnErrorListener;
 import com.kejunyao.audio.OnLoadListener;
@@ -22,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
     final AudioPlayer mAudioPlayer = new AudioPlayer();
     private TextView mTimeInfoView;
-    private SeekBar mSeekBar;
+    private SeekBar mPlayProgressSeekBar;
     private TextView mVolumeTextView;
     private SeekBar mVolumeSeekBar;
 
@@ -30,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mSeekBar = findViewById(R.id.seek_bar);
+        mPlayProgressSeekBar = findViewById(R.id.seek_bar);
         mVolumeTextView = findViewById(R.id.volume_text);
         mVolumeSeekBar = findViewById(R.id.seek_volume);
         mVolumeSeekBar.setProgress((int) (mAudioPlayer.getVolumePercent() * 100));
@@ -63,11 +65,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPause(boolean pause) {
                 AudioLog.d(TAG, "onLoad, ", (pause ? "暂停..." : "播放..."));
+                Toast.makeText(MainActivity.this, pause ? "暂停" : "播放", Toast.LENGTH_SHORT).show();
             }
         });
         mAudioPlayer.setOnTimeInfoListener(new OnTimeInfoListener() {
             @Override
             public void onTimeInfo(int currentTime, int totalTime) {
+                int progress = (int) (((float) currentTime / (float) totalTime) * mPlayProgressSeekBar.getMax());
+                mPlayProgressSeekBar.setProgress(progress);
                 mTimeInfoView.setText(TimeUtils.toTimeText(currentTime, totalTime));
                 AudioLog.d(TAG, "onTimeInfo, currentTime: ", currentTime, ", totalTime: ", totalTime);
             }
@@ -76,10 +81,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(int errCode) {
                 AudioLog.d(TAG, "错误码：", errCode);
+                Toast.makeText(MainActivity.this, "播放错误，errCode: " + errCode, Toast.LENGTH_SHORT).show();
             }
         });
 
-        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        mPlayProgressSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             }
@@ -116,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onComplete() {
                 AudioLog.d(TAG, "播放完成。");
+                Toast.makeText(MainActivity.this, "播放完成", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -143,5 +150,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void stop(View view) {
         mAudioPlayer.stop();
+    }
+
+    public void muteLeft(View view) {
+        mAudioPlayer.setMute(Mute.MUTE_LEFT);
+    }
+
+    public void muteRight(View view) {
+        mAudioPlayer.setMute(Mute.MUTE_RIGHT);
+    }
+
+    public void muteCenter(View view) {
+        mAudioPlayer.setMute(Mute.MUTE_CENTER);
     }
 }

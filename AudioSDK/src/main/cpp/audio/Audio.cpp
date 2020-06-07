@@ -22,8 +22,8 @@ void Audio::setSampleRate(int sampleRate) {
     }
 }
 
-void Audio::updateClock() {
-    clock += dataSize / ((double) (sampleRate * 2 * 2));
+void Audio::updateClock(int bufferSize) {
+    clock += bufferSize / ((double) (sampleRate * 2 * 2));
 }
 
 bool Audio::shouldRefresh() {
@@ -52,11 +52,12 @@ void Audio::release() {
     }
 }
 
-int Audio::durationInSecond() {
-    return duration / AV_TIME_BASE;
-}
-
 void Audio::reset() {
     clock = 0;
     lastClock = 0;
+}
+
+bool Audio::isPlayComplete() {
+    int current = clock;
+    return current == durationInSecond;
 }

@@ -78,6 +78,7 @@ void AudioDecoder::prepare() {
                 audio->streamIndex = i;
                 audio->setSampleRate(parameters->sample_rate);
                 audio->duration = avFormatContext->duration;
+                audio->durationInSecond = audio->duration / AV_TIME_BASE;
                 audio->timeBase = streams->time_base;
                 if (LOG_DEBUG) {
                     LOGD("AudioDecoder#prepare, find AVCodecParameters");
@@ -205,12 +206,11 @@ void AudioDecoder::decode() {
             }
         }
     }
-    exit = true;
-    if (playStatus != NULL && !playStatus->isExit()) {
-        if (javaCaller != NULL) {
-            javaCaller->callJavaMethod(true, EVENT_COMPLETE, 0, 0);
-        }
+    if (javaCaller != NULL) {
+        // 非自然完成（被打断）
+        javaCaller->callJavaMethod(true, EVENT_COMPLETE, audio->isPlayComplete() ? 0 : 1, 1);
     }
+    exit = true;
     if (LOG_DEBUG) {
         LOGD("AudioDecoder#decode，解码完成。");
     }
@@ -251,7 +251,7 @@ void AudioDecoder::seekByPercent(float percent) {
     if (audio == NULL) {
         return;
     }
-    seek(percent * audio->durationInSecond());
+    seek(percent * audio->durationInSecond);
 }
 
 void AudioDecoder::seek(int64_t second) {

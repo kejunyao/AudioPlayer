@@ -20,6 +20,14 @@
             android:text="开始"/>
 
         <Button
+            android:id="@+id/stop"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="停止"
+            android:onClick="stop"/>
+
+        <Button
             android:id="@+id/pause"
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -35,13 +43,6 @@
             android:onClick="play"
             android:text="播放"/>
 
-        <Button
-            android:id="@+id/stop"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="停止"
-            android:onClick="stop"/>
     </LinearLayout>
     <TextView
         android:id="@+id/time_info"
@@ -66,5 +67,29 @@
         android:id="@+id/seek_volume"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="muteLeft"
+            android:text="左声道"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="muteCenter"
+            android:text="立体声"/>
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="muteRight"
+            android:text="右声道"/>
+    </LinearLayout>
 
 </LinearLayout>

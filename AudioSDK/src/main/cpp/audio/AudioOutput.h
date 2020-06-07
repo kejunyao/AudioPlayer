@@ -39,6 +39,9 @@ private:
     // 播放音量
     SLVolumeItf pcmVolumePlay = NULL;
     float volumePercent = 1.0;
+    // 音道
+    SLMuteSoloItf  pcmMutePlay = NULL;
+    int mute = 2;
 
 public:
     JavaCaller *javaCaller = NULL;
@@ -62,6 +65,8 @@ public:
     void play();
 
     void setVolume(float percent);
+
+    void setMute(int mute);
 
     void pause();
 

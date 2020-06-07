@@ -48,7 +48,7 @@ class EventHandler extends Handler {
                 onTimeInfo(msg.arg1, msg.arg2);
                 break;
             case EVENT_COMPLETE:
-                onComplete();
+                onComplete(msg.arg1 == 0);
                 break;
             case EVENT_ERROR:
                 onError(msg.arg1);
@@ -108,10 +108,13 @@ class EventHandler extends Handler {
         }
     }
 
-    private void onComplete() {
+    private void onComplete(boolean success) {
+        AudioLog.d("onComplete", "success: ", success);
         AudioPlayer player = mAudioPlayerRef.get();
         if (player != null) {
-            player.stop();
+            if (success) {
+                player.stop();
+            }
             if (player.mOnCompleteListener != null) {
                 player.mOnCompleteListener.onComplete();
             }

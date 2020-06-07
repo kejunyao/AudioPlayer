@@ -77,6 +77,7 @@ public class AudioPlayer {
 
     public void start() {
         setVolume(sVolumePercent);
+        setMute(sMute);
         _start();
     }
 
@@ -100,6 +101,15 @@ public class AudioPlayer {
 
     public float getVolumePercent() {
         return sVolumePercent;
+    }
+
+    private static Mute sMute = Mute.MUTE_CENTER;
+    public void setMute(Mute mute) {
+        if (mute == null) {
+            return;
+        }
+        sMute = mute;
+        _setMute(mute.ordinal());
     }
 
     public void resume() {
@@ -139,6 +149,7 @@ public class AudioPlayer {
     private native void _seekByPercent(float percent);
     private native void _seek(int second);
     private native void _setVolume(float percent);
+    private native void _setMute(int mute);
     private native void _pause();
     private native void _resume();
     private native void _stop();
