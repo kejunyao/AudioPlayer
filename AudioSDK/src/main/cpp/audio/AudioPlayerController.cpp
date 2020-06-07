@@ -129,6 +129,19 @@ void AudioPlayerController::stop() {
     audioOutput->stop();
 }
 
+void AudioPlayerController::setVolume(float percent) {
+    if (isReleasing()) {
+        return;
+    }
+    if (!isWorking()) {
+        return;
+    }
+    if (audioOutput == NULL) {
+        return;
+    }
+    audioOutput->setVolume(percent);
+}
+
 void AudioPlayerController::release() {
     if (isReleasing()) {
         return;

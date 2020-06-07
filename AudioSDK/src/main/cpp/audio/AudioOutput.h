@@ -36,6 +36,9 @@ private:
     // PCM
     SLObjectItf pcmPlayerObject = NULL;
     SLPlayItf pcmPlayerPlay = NULL;
+    // 播放音量
+    SLVolumeItf pcmVolumePlay = NULL;
+    float volumePercent = 1.0;
 
 public:
     JavaCaller *javaCaller = NULL;
@@ -58,6 +61,7 @@ public:
 
     void play();
 
+    void setVolume(float percent);
 
     void pause();
 

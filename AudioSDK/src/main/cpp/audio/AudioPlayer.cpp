@@ -112,3 +112,12 @@ Java_com_kejunyao_audio_AudioPlayer__1seek(JNIEnv *env, jobject thiz, jint secon
     }
     playerController->seek(second);
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_kejunyao_audio_AudioPlayer__1setVolume(JNIEnv *env, jobject thiz, jfloat percent) {
+    if (playerController == NULL) {
+        return;
+    }
+    playerController->setVolume(percent);
+}

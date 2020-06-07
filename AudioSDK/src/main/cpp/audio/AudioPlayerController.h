@@ -47,6 +47,7 @@ class AudioPlayerController {
         void pause();
         void stop();
         void release();
+        void setVolume(float percent);
 };
 
 

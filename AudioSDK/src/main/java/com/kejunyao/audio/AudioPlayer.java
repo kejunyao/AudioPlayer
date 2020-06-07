@@ -76,6 +76,7 @@ public class AudioPlayer {
     }
 
     public void start() {
+        setVolume(sVolumePercent);
         _start();
     }
 
@@ -85,6 +86,20 @@ public class AudioPlayer {
 
     public void seek(int second) {
         _seek(second);
+    }
+
+    private static float sVolumePercent = 1.0f;
+    public void setVolume(float percent) {
+        int value = (int) (100 * percent);
+        if (value < 0 || value > 100) {
+            return;
+        }
+        sVolumePercent = percent;
+        _setVolume(percent);
+    }
+
+    public float getVolumePercent() {
+        return sVolumePercent;
     }
 
     public void resume() {
@@ -123,6 +138,7 @@ public class AudioPlayer {
     private native void _start();
     private native void _seekByPercent(float percent);
     private native void _seek(int second);
+    private native void _setVolume(float percent);
     private native void _pause();
     private native void _resume();
     private native void _stop();

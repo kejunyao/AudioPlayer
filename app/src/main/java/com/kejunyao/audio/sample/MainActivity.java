@@ -23,12 +23,19 @@ public class MainActivity extends AppCompatActivity {
     final AudioPlayer mAudioPlayer = new AudioPlayer();
     private TextView mTimeInfoView;
     private SeekBar mSeekBar;
+    private TextView mVolumeTextView;
+    private SeekBar mVolumeSeekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mSeekBar = findViewById(R.id.seek_bar);
+        mVolumeTextView = findViewById(R.id.volume_text);
+        mVolumeSeekBar = findViewById(R.id.seek_volume);
+        mVolumeSeekBar.setProgress((int) (mAudioPlayer.getVolumePercent() * 100));
+        setVolumeProgress(mAudioPlayer.getVolumePercent());
+
         // MediaPlayer mediaPlayer = new MediaPlayer();
         // mediaPlayer.start();
         // mediaPlayer.release();
@@ -88,12 +95,37 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mVolumeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float percent = (float) mVolumeSeekBar.getProgress() / (float) mVolumeSeekBar.getMax();
+                mAudioPlayer.setVolume(percent);
+                setVolumeProgress(percent);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+
         mAudioPlayer.setOnCompleteListener(new OnCompleteListener() {
             @Override
             public void onComplete() {
                 AudioLog.d(TAG, "播放完成。");
             }
         });
+
+
+    }
+
+    private void setVolumeProgress(float percent) {
+        int progress = (int) (100 * percent);
+        String text = "音量：" + progress + "%";
+        mVolumeTextView.setText(text);
     }
 
     public void start(View view) {
@@ -111,13 +143,5 @@ public class MainActivity extends AppCompatActivity {
 
     public void stop(View view) {
         mAudioPlayer.stop();
-    }
-
-    public void togglePlayStop(View view) {
-
-    }
-
-    public void seek(View view) {
-        mAudioPlayer.seek(200);
     }
 }

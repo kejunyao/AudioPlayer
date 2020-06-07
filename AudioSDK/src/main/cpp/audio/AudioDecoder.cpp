@@ -258,6 +258,12 @@ void AudioDecoder::seek(int64_t second) {
     if (audio == NULL) {
         return;
     }
+    if (playStatus == NULL) {
+        return;
+    }
+    if (avFormatContext == NULL) {
+        return;
+    }
     if (second < 0 && second > audio->duration) {
         return;
     }

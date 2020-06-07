@@ -80,20 +80,25 @@ void AudioOutput::initOpenSLES() {
     };
     SLDataSource slDataSource = {&android_queue, &pcm};
 
-
-    const SLInterfaceID ids[1] = {SL_IID_BUFFERQUEUE};
-    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
+    const int LENGTH = 2;
+    const SLInterfaceID ids[LENGTH] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
+    const SLboolean req[LENGTH] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
     (*engineEngine)->CreateAudioPlayer(
-            engineEngine, &pcmPlayerObject,
-            &slDataSource, &audioSnk,
-            1, ids, req
-            );
+            engineEngine,
+            &pcmPlayerObject,
+            &slDataSource,
+            &audioSnk,
+            LENGTH,
+            ids,
+            req);
     // 初始化播放器
     (*pcmPlayerObject)->Realize(pcmPlayerObject, SL_BOOLEAN_FALSE);
 
     // 得到接口后调用  获取Player接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_PLAY, &pcmPlayerPlay);
+
+    (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_VOLUME, &pcmVolumePlay);
 
     // 注册回调缓冲区 获取缓冲队列接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_BUFFERQUEUE, &pcmBufferQueue);
@@ -102,6 +107,8 @@ void AudioOutput::initOpenSLES() {
     // 获取播放状态接口
     (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay, SL_PLAYSTATE_PLAYING);
     pcmBufferCallBack(pcmBufferQueue, this);
+
+    setVolume(volumePercent);
 }
 
 int AudioOutput::getCurrentSampleRateForOpenSLES(int sampleRate) {
@@ -165,6 +172,51 @@ void AudioOutput::play() {
     if (LOG_DEBUG) {
         LOGD("AudioOutput#play, 开辟线程播放, source: %s", audio->source);
     }
+}
+
+
+void AudioOutput::setVolume(float percent) {
+    if (pcmVolumePlay == NULL) {
+        return;
+    }
+    int value = 100 * percent;
+    if (value < 0 || value > 100) {
+        return;
+    }
+    volumePercent = percent;
+    if(value > 30) {
+        (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - value) * -20);
+        return;
+    }
+    if(value > 25) {
+        (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - value) * -22);
+        return;
+    }
+    if(value > 20) {
+        (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - value) * -25);
+        return;
+    }
+    if(value > 15) {
+        (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - value) * -28);
+        return;
+    }
+    if(value > 10) {
+        (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - value) * -30);
+        return;
+    }
+    if(percent > 5) {
+        (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - value) * -34);
+        return;
+    }
+    if(value > 3) {
+        (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - value) * -37);
+        return;
+    }
+    if(value > 0) {
+        (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - value) * -40);
+        return;
+    }
+    (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - value) * -100);
 }
 
 void AudioOutput::pause() {
@@ -314,6 +366,7 @@ void AudioOutput::release() {
         engineEngine = NULL;
     }
 }
+
 
 
 
