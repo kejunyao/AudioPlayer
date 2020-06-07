@@ -67,7 +67,7 @@ int AVPacketBlockQueue::pop(AVPacket *packet) {
     return 0;
 }
 
-void AVPacketBlockQueue::release() {
+void AVPacketBlockQueue::clear() {
     pthread_cond_signal(&cond);
     pthread_mutex_lock(&mutex);
     while (!queue.empty()) {

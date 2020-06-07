@@ -14,16 +14,19 @@
 class PlayStatus {
 private:
     pthread_mutex_t mutex;
-    pthread_cond_t cond;
+    pthread_mutex_t mutexSeek;
     bool exit = false;
     bool load = true;
+    bool seek = false;
     public:
         PlayStatus();
         ~PlayStatus();
         bool isExit();
         bool isLoad();
+        bool isSeek();
         void setExit(bool exit);
         void setLoad(bool load);
+        void setSeek(bool seek);
 };
 
 

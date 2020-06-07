@@ -94,3 +94,21 @@ Java_com_kejunyao_audio_AudioPlayer__1resume(JNIEnv *env, jobject thiz) {
     }
     playerController->resume();
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_kejunyao_audio_AudioPlayer__1seekByPercent(JNIEnv *env, jobject thiz, jfloat percent) {
+    if (playerController == NULL) {
+        return;
+    }
+    playerController->seekByPercent(percent);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_kejunyao_audio_AudioPlayer__1seek(JNIEnv *env, jobject thiz, jint second) {
+    if (playerController == NULL) {
+        return;
+    }
+    playerController->seek(second);
+}

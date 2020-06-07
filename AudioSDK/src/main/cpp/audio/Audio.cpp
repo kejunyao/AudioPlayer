@@ -40,7 +40,7 @@ void Audio::release() {
         buffer = NULL;
     }
     if (queue != NULL) {
-        queue->release();
+        queue->clear();
         delete(queue);
         queue = NULL;
     }
@@ -50,4 +50,13 @@ void Audio::release() {
         av_free(avCodecContext);
         avCodecContext = NULL;
     }
+}
+
+int Audio::durationInSecond() {
+    return duration / AV_TIME_BASE;
+}
+
+void Audio::reset() {
+    clock = 0;
+    lastClock = 0;
 }

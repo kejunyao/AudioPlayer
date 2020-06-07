@@ -80,6 +80,22 @@ void AudioPlayerController::start() {
     audioDecoder->decodeAsync();
 }
 
+
+void AudioPlayerController::seekByPercent(float percent) {
+    if (audioDecoder == NULL) {
+        return;
+    }
+    audioDecoder->seekByPercent(percent);
+}
+
+
+void AudioPlayerController::seek(int second) {
+    if (audioDecoder == NULL) {
+        return;
+    }
+    audioDecoder->seek(second);
+}
+
 void AudioPlayerController::resume() {
     if (isReleasing()) {
         return;
@@ -153,5 +169,7 @@ void AudioPlayerController::release() {
         LOGD("AudioPlayerController::release() 完成。");
     }
 }
+
+
 
 

@@ -6,47 +6,67 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".MainActivity">
-
     <TextView
         android:id="@+id/time_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="00:00/00:00"/>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/start"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="start"
+            android:text="开始"/>
 
+        <Button
+            android:id="@+id/pause"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="pause"
+            android:text="暂停"/>
+
+        <Button
+            android:id="@+id/play"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="play"
+            android:text="播放"/>
+
+        <Button
+            android:id="@+id/stop"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="停止"
+            android:onClick="stop"/>
+
+        <Button
+            android:id="@+id/play_stop"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="播放/停止"
+            android:onClick="togglePlayStop"/>
+
+    </LinearLayout>
     <Button
-        android:id="@+id/start"
+        android:id="@+id/seek_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="start"
-        android:text="开始"/>
-
-    <Button
-        android:id="@+id/pause"
+        android:text="跳播到200秒"
+        android:onClick="seek"/>
+    <SeekBar
+        android:id="@+id/seek_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="pause"
-        android:text="暂停"/>
-
-    <Button
-        android:id="@+id/play"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="play"
-        android:text="播放"/>
-
-    <Button
-        android:id="@+id/stop"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="停止"
-        android:onClick="stop"/>
-
-    <Button
-        android:id="@+id/play_stop"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="播放/停止"
-        android:onClick="togglePlayStop"/>
+        android:max="100" />
 
 </LinearLayout>

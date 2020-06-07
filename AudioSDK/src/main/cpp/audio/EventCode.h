@@ -13,5 +13,6 @@
 #define EVENT_LOADING    2
 #define EVENT_TIME_INFO  5 // why is 5, PAUSE = 3, RESUME = 4
 #define EVENT_ERROR      6
+#define EVENT_COMPLETE   7
 
 #endif //AUDIOPLAYER_EVENTCODE_H

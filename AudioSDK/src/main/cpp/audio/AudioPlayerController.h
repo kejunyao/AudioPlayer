@@ -41,6 +41,8 @@ class AudioPlayerController {
         ~AudioPlayerController();
         void prepare(const char *source);
         void start();
+        void seekByPercent(float percent);
+        void seek(int second);
         void resume();
         void pause();
         void stop();

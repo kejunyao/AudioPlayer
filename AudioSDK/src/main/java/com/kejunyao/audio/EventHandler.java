@@ -23,6 +23,7 @@ class EventHandler extends Handler {
     static final int EVENT_RESUME    = 4;
     static final int EVENT_TIME_INFO = 5;
     static final int EVENT_ERROR     = 6;
+    static final int EVENT_COMPLETE  = 7;
 
     private final WeakReference<AudioPlayer> mAudioPlayerRef;
     public EventHandler(AudioPlayer player, Looper looper) {
@@ -45,6 +46,9 @@ class EventHandler extends Handler {
                 break;
             case EVENT_TIME_INFO:
                 onTimeInfo(msg.arg1, msg.arg2);
+                break;
+            case EVENT_COMPLETE:
+                onComplete();
                 break;
             case EVENT_ERROR:
                 onError(msg.arg1);
@@ -100,6 +104,16 @@ class EventHandler extends Handler {
             player.stop();
             if (player.mOnErrorListener != null) {
                 player.mOnErrorListener.onError(errCode);
+            }
+        }
+    }
+
+    private void onComplete() {
+        AudioPlayer player = mAudioPlayerRef.get();
+        if (player != null) {
+            player.stop();
+            if (player.mOnCompleteListener != null) {
+                player.mOnCompleteListener.onComplete();
             }
         }
     }

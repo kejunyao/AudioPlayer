@@ -12,18 +12,12 @@ AudioDecoder::AudioDecoder(JavaCaller *javaCaller, PlayStatus *playStatus, Audio
     this->playStatus = playStatus;
     this->audio = audio;
     pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_init(&mutexSeek, NULL);
 }
 
 AudioDecoder::~AudioDecoder() {
     pthread_mutex_destroy(&mutex);
-}
-
-bool AudioDecoder::isExit() {
-    bool result;
-    pthread_mutex_lock(&mutex);
-    result = this->exit;
-    pthread_mutex_unlock(&mutex);
-    return result;
+    pthread_mutex_destroy(&mutexSeek);
 }
 
 void *prepareCallback(void *data) {
@@ -83,7 +77,7 @@ void AudioDecoder::prepare() {
             if (audio->streamIndex == -1) {
                 audio->streamIndex = i;
                 audio->setSampleRate(parameters->sample_rate);
-                audio->duration = avFormatContext->duration / AV_TIME_BASE;
+                audio->duration = avFormatContext->duration;
                 audio->timeBase = streams->time_base;
                 if (LOG_DEBUG) {
                     LOGD("AudioDecoder#prepare, find AVCodecParameters");
@@ -180,14 +174,17 @@ void AudioDecoder::decode() {
         if (avFormatContext == NULL) {
             break;
         }
+        if (audio == NULL || audio->queue == NULL) {
+            break;
+        }
+        if (playStatus->isSeek()) {
+            continue;
+        }
+        if (audio->queue->size() > 40) {
+            continue;
+        }
         AVPacket *avPacket = av_packet_alloc();
         if(av_read_frame(avFormatContext, avPacket) == 0) {
-            if (audio == NULL || audio->queue == NULL) {
-                av_packet_free(&avPacket);
-                av_free(avPacket);
-                avPacket = NULL;
-                break;
-            }
             if (avPacket->stream_index == audio->streamIndex) {
                 audio->queue->push(avPacket);
             } else {
@@ -209,6 +206,11 @@ void AudioDecoder::decode() {
         }
     }
     exit = true;
+    if (playStatus != NULL && !playStatus->isExit()) {
+        if (javaCaller != NULL) {
+            javaCaller->callJavaMethod(true, EVENT_COMPLETE, 0, 0);
+        }
+    }
     if (LOG_DEBUG) {
         LOGD("AudioDecoder#decode，解码完成。");
     }
@@ -243,6 +245,30 @@ void AudioDecoder::release() {
         audio = NULL;
     }
     pthread_mutex_unlock(&mutex);
+}
+
+void AudioDecoder::seekByPercent(float percent) {
+    if (audio == NULL) {
+        return;
+    }
+    seek(percent * audio->durationInSecond());
+}
+
+void AudioDecoder::seek(int64_t second) {
+    if (audio == NULL) {
+        return;
+    }
+    if (second < 0 && second > audio->duration) {
+        return;
+    }
+    playStatus->setSeek(true);
+    audio->queue->clear();
+    audio->reset();
+    pthread_mutex_lock(&mutexSeek);
+    int64_t rel = second * AV_TIME_BASE;
+    avformat_seek_file(avFormatContext, -1, INT64_MIN, rel, INT64_MAX, 0);
+    pthread_mutex_unlock(&mutexSeek);
+    playStatus->setSeek(false);
 }
 
 

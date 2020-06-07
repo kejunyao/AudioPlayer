@@ -27,7 +27,7 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
                         true,
                         EVENT_TIME_INFO,
                         output->audio->clock,
-                        output->audio->duration
+                        output->audio->durationInSecond()
                         );
             }
             (*output->pcmBufferQueue)->Enqueue(

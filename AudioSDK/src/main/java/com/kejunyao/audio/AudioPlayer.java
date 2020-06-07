@@ -23,8 +23,6 @@ public class AudioPlayer {
         System.loadLibrary("swscale-4");
     }
 
-
-
     private EventHandler mEventHandler;
 
     public AudioPlayer() {
@@ -63,6 +61,11 @@ public class AudioPlayer {
         mOnErrorListener = listener;
     }
 
+    OnCompleteListener mOnCompleteListener;
+    public void setOnCompleteListener(OnCompleteListener listener) {
+        mOnCompleteListener = listener;
+    }
+
     private String mSource;
     public void setDataSource(String source) {
         mSource = source;
@@ -74,6 +77,14 @@ public class AudioPlayer {
 
     public void start() {
         _start();
+    }
+
+    public void seek(float percent) {
+        _seekByPercent(percent);
+    }
+
+    public void seek(int second) {
+        _seek(second);
     }
 
     public void resume() {
@@ -110,11 +121,12 @@ public class AudioPlayer {
 
     private native void _prepare(String source);
     private native void _start();
+    private native void _seekByPercent(float percent);
+    private native void _seek(int second);
     private native void _pause();
     private native void _resume();
     private native void _stop();
     private native void _release();
     public native boolean isPlaying();
-
 
 }

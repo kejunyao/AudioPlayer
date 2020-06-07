@@ -28,7 +28,7 @@ public:
     int size();
     int push(AVPacket *packet);
     int pop(AVPacket *packet);
-    void release();
+    void clear();
 };
 
 

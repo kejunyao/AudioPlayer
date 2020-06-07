@@ -9,12 +9,12 @@
 
 PlayStatus::PlayStatus() {
     pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&cond, NULL);
+    pthread_mutex_init(&mutexSeek, NULL);
 }
 
 PlayStatus::~PlayStatus() {
     pthread_mutex_destroy(&mutex);
-    pthread_cond_destroy(&cond);
+    pthread_mutex_destroy(&mutexSeek);
 }
 
 bool PlayStatus::isExit() {
@@ -43,4 +43,18 @@ void PlayStatus::setLoad(bool load) {
     pthread_mutex_lock(&mutex);
     this->load = load;
     pthread_mutex_unlock(&mutex);
+}
+
+bool PlayStatus::isSeek() {
+    bool result;
+    pthread_mutex_lock(&mutexSeek);
+    result = seek;
+    pthread_mutex_unlock(&mutexSeek);
+    return result;
+}
+
+void PlayStatus::setSeek(bool seek) {
+    pthread_mutex_lock(&mutexSeek);
+    this->seek = seek;
+    pthread_mutex_unlock(&mutexSeek);
 }

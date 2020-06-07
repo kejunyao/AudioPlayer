@@ -25,15 +25,11 @@ extern "C" {
 class AudioDecoder {
 private:
     pthread_mutex_t mutex;
+    pthread_mutex_t mutexSeek;
     Audio *audio = NULL;
     JavaCaller *javaCaller;
     AVFormatContext *avFormatContext = NULL;
     bool exit = false;
-private:
-    bool isExit();
-    // AVCodecParameters *codecpar = NULL;
-    // VPacket *avPacket = NULL;
-    // AVFrame *avFrame = NULL;
 
 public:
     PlayStatus *playStatus;
@@ -47,6 +43,10 @@ public:
     void prepare();
 
     void prepareAsync();
+
+    void seekByPercent(float percent);
+
+    void seek(int64_t second);
 
     void decode();
 

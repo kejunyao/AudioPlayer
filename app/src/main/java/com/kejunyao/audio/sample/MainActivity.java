@@ -1,13 +1,15 @@
 package com.kejunyao.audio.sample;
 
 import androidx.appcompat.app.AppCompatActivity;
-import android.media.MediaPlayer;
+
 import android.os.Bundle;
 import android.view.View;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.kejunyao.audio.AudioLog;
 import com.kejunyao.audio.AudioPlayer;
+import com.kejunyao.audio.OnCompleteListener;
 import com.kejunyao.audio.OnErrorListener;
 import com.kejunyao.audio.OnLoadListener;
 import com.kejunyao.audio.OnPauseResumeListener;
@@ -20,12 +22,14 @@ public class MainActivity extends AppCompatActivity {
 
     final AudioPlayer mAudioPlayer = new AudioPlayer();
     private TextView mTimeInfoView;
+    private SeekBar mSeekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        MediaPlayer mediaPlayer = new MediaPlayer();
+        mSeekBar = findViewById(R.id.seek_bar);
+        // MediaPlayer mediaPlayer = new MediaPlayer();
         // mediaPlayer.start();
         // mediaPlayer.release();
         // mediaPlayer.pause();
@@ -67,6 +71,29 @@ public class MainActivity extends AppCompatActivity {
                 AudioLog.d(TAG, "错误码：", errCode);
             }
         });
+
+        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                float percent = (float) seekBar.getProgress() / (float) seekBar.getMax();
+                mAudioPlayer.seek(percent);
+            }
+        });
+
+        mAudioPlayer.setOnCompleteListener(new OnCompleteListener() {
+            @Override
+            public void onComplete() {
+                AudioLog.d(TAG, "播放完成。");
+            }
+        });
     }
 
     public void start(View view) {
@@ -88,5 +115,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void togglePlayStop(View view) {
 
+    }
+
+    public void seek(View view) {
+        mAudioPlayer.seek(200);
     }
 }
