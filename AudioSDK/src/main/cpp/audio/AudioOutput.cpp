@@ -11,15 +11,30 @@ AudioOutput::AudioOutput(JavaCaller *javaCaller, PlayStatus *playStatus, Audio *
     this->javaCaller = javaCaller;
     this->playStatus = playStatus;
     this->audio = audio;
+
+    // SoundTouch
+    this->soundTouch = new SoundTouch();
+    soundTouch = new SoundTouch();
+    soundTouch->setChannels(2);
+    soundTouch->setPitch(pitch);
+    soundTouch->setTempo(speed);
 }
 
 AudioOutput::~AudioOutput() {
 }
 
+
+void AudioOutput::initSampleBuffer() {
+    if (sampleBuffer == NULL && audio->sampleRate > 0) {
+        sampleBuffer = static_cast<SAMPLETYPE *>(malloc(audio->sampleRate * 2 * 2));
+        soundTouch->setSampleRate(audio->sampleRate);
+    }
+}
+
 void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
     AudioOutput *output = (AudioOutput *) context;
     if (output != NULL) {
-        int bufferSize = output->resample();
+        int bufferSize = output->soundTouchResample();
         if (bufferSize > 0) {
             output->audio->updateClock(bufferSize);
             int current = output->audio->clock;
@@ -115,6 +130,7 @@ void AudioOutput::initOpenSLES() {
     pcmBufferCallBack(pcmBufferQueue, this);
 
     setVolume(volumePercent);
+    setMute(mute);
 }
 
 int AudioOutput::getCurrentSampleRateForOpenSLES(int sampleRate) {
@@ -260,7 +276,48 @@ void AudioOutput::checkChannels(AVFrame *frame) {
     }
 }
 
-int AudioOutput::resample() {
+
+int AudioOutput::soundTouchResample() {
+    while (playStatus != NULL && !playStatus->isExit()) {
+        if (audio == NULL) {
+            break;
+        }
+        if (audio->sampleRate == 0) {
+            continue;
+        }
+        initSampleBuffer();
+        outBuffer = NULL;
+        if (finished) {
+            finished = false;
+            dataSize = resample(reinterpret_cast<void **>(&outBuffer));
+            if (dataSize > 0) {
+                for (int i = 0; i < dataSize / 2 + 1; i++) {
+                    sampleBuffer[i] = (outBuffer[i * 2] | ((outBuffer[i * 2 + 1]) << 8));
+                }
+                soundTouch->putSamples(sampleBuffer, nb);
+                num = soundTouch->receiveSamples(sampleBuffer, dataSize / 4);
+            } else {
+                soundTouch->flush();
+            }
+        }
+        if (num == 0) {
+            finished = true;
+            continue;
+        } else {
+            if (outBuffer == NULL) {
+                num = soundTouch->receiveSamples(sampleBuffer, dataSize / 4);
+                if (num == 0) {
+                    finished = true;
+                    continue;
+                }
+            }
+            return num;
+        }
+    }
+    return 0;
+}
+
+int AudioOutput::resample(void **pcmBuffer) {
     int bufferSize = 0;
     while(playStatus != NULL && !playStatus->isExit()) {
         if (audio == NULL) {
@@ -318,7 +375,7 @@ int AudioOutput::resample() {
                 continue;
             }
 
-            int nb = swr_convert(
+            nb = swr_convert(
                     swr_ctx,
                     &audio->buffer,
                     avFrame->nb_samples,
@@ -333,7 +390,7 @@ int AudioOutput::resample() {
                 audio->nowTime = audio->clock;
             }
             audio->clock = audio->nowTime;
-
+            *pcmBuffer = audio->buffer;
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
@@ -403,6 +460,26 @@ void AudioOutput::release() {
         pcmMutePlay = NULL;
     }
 }
+
+void AudioOutput::setPitch(float pitch) {
+    if (soundTouch == NULL) {
+        return;
+    }
+    initSampleBuffer();
+    this->pitch = pitch;
+    soundTouch->setPitch(pitch);
+}
+
+void AudioOutput::setSpeed(float speed) {
+    if (soundTouch == NULL) {
+        return;
+    }
+    initSampleBuffer();
+    this->speed = speed;
+    soundTouch->setTempo(speed);
+}
+
+
 
 
 

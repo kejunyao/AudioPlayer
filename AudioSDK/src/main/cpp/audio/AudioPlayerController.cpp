@@ -156,6 +156,33 @@ void AudioPlayerController::setMute(int mute) {
     audioOutput->setMute(mute);
 }
 
+
+void AudioPlayerController::setPitch(float pitch) {
+    if (isReleasing()) {
+        return;
+    }
+    if (!isWorking()) {
+        return;
+    }
+    if (audioOutput == NULL) {
+        return;
+    }
+    audioOutput->setPitch(pitch);
+}
+
+void AudioPlayerController::setSpeed(float speed) {
+    if (isReleasing()) {
+        return;
+    }
+    if (!isWorking()) {
+        return;
+    }
+    if (audioOutput == NULL) {
+        return;
+    }
+    audioOutput->setSpeed(speed);
+}
+
 void AudioPlayerController::release() {
     if (isReleasing()) {
         return;
@@ -196,6 +223,7 @@ void AudioPlayerController::release() {
         LOGD("AudioPlayerController::release() 完成。");
     }
 }
+
 
 
 

@@ -163,4 +163,20 @@ public class MainActivity extends AppCompatActivity {
     public void muteCenter(View view) {
         mAudioPlayer.setMute(Mute.MUTE_CENTER);
     }
+
+    public void speedAdd(View view) {
+        mAudioPlayer.setSpeed(mAudioPlayer.getSpeed() + 0.1f);
+    }
+
+    public void speedSub(View view) {
+        mAudioPlayer.setSpeed(mAudioPlayer.getSpeed() - 0.1f);
+    }
+
+    public void pitchAdd(View view) {
+        mAudioPlayer.setPitch(mAudioPlayer.getPitch() + 0.1f);
+    }
+
+    public void pitchSub(View view) {
+        mAudioPlayer.setPitch(mAudioPlayer.getPitch() - 0.1f);
+    }
 }

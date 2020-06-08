@@ -14,12 +14,15 @@
 #include "../AndroidLog.h"
 #include "EventCode.h"
 #include "ErrorCode.h"
+#include "SoundTouch.h"
+
+using namespace soundtouch;
 
 extern "C" {
-#include "libavcodec/avcodec.h"
-#include <libswresample/swresample.h>
-#include <SLES/OpenSLES.h>
-#include <SLES/OpenSLES_Android.h>
+    #include "libavcodec/avcodec.h"
+    #include <libswresample/swresample.h>
+    #include <SLES/OpenSLES.h>
+    #include <SLES/OpenSLES_Android.h>
 };
 
 class AudioOutput {
@@ -43,6 +46,18 @@ private:
     SLMuteSoloItf  pcmMutePlay = NULL;
     int mute = 2;
 
+private:
+    // SoundTouch
+    SoundTouch *soundTouch = NULL;
+    SAMPLETYPE *sampleBuffer = NULL;
+    uint8_t *outBuffer = NULL;
+    float pitch = 1.0f;
+    float speed = 1.0f;
+    bool finished = true;
+    int nb = 0;
+    int num = 0;
+    int dataSize = 0;
+
 public:
     JavaCaller *javaCaller = NULL;
     PlayStatus *playStatus = NULL;
@@ -54,19 +69,41 @@ public:
 private:
     int getCurrentSampleRateForOpenSLES(int sampleRate);
     void checkChannels(AVFrame *frame);
+    void initSampleBuffer();
 
 public:
     AudioOutput(JavaCaller *javaCaller, PlayStatus *playStatus, Audio *audio);
 
     ~AudioOutput();
     void initOpenSLES();
-    int resample();
+    int resample(void **pcmBuffer);
 
     void play();
 
+    /**
+     * 设置音量
+     * @param percent 0.0 ~ 1.0
+     */
     void setVolume(float percent);
 
+    /**
+     * 设置音道
+     * @param mute 0，右声道；1，左声道；2，立体声；其他值，立体声
+     */
     void setMute(int mute);
+
+    int soundTouchResample();
+
+    /**
+     * 设置音调
+     * @param pitch 音调
+     */
+    void setPitch(float pitch);
+    /**
+     * 设置音速
+     * @param speed 音速
+     */
+    void setSpeed(float speed);
 
     void pause();
 

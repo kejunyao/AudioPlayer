@@ -49,6 +49,16 @@ class AudioPlayerController {
         void release();
         void setVolume(float percent);
         void setMute(int mute);
+        /**
+        * 设置音调
+        * @param pitch 音调
+        */
+        void setPitch(float pitch);
+        /**
+         * 设置音速
+         * @param speed 音速
+         */
+        void setSpeed(float speed);
 };
 
 

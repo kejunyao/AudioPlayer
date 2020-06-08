@@ -78,6 +78,8 @@ public class AudioPlayer {
     public void start() {
         setVolume(sVolumePercent);
         setMute(sMute);
+        setSpeed(sSpeed);
+        setPitch(sPitch);
         _start();
     }
 
@@ -110,6 +112,34 @@ public class AudioPlayer {
         }
         sMute = mute;
         _setMute(mute.ordinal());
+    }
+
+    private static float sPitch = 1.0f;
+    /**
+     * 设置音调
+     * @param pitch 音调
+     */
+    public void setPitch(float pitch) {
+        sPitch = pitch;
+        _setPitch(pitch);
+    }
+
+    public float getPitch() {
+        return sPitch;
+    }
+
+    private static float sSpeed = 1.0f;
+    /**
+     * 设置音速
+     * @param speed 音速
+     */
+    public void setSpeed(float speed) {
+        sSpeed = speed;
+        _setSpeed(speed);
+    }
+
+    public float getSpeed() {
+        return sSpeed;
     }
 
     public void resume() {
@@ -150,6 +180,8 @@ public class AudioPlayer {
     private native void _seek(int second);
     private native void _setVolume(float percent);
     private native void _setMute(int mute);
+    private native void _setPitch(float pitch);
+    private native void _setSpeed(float speed);
     private native void _pause();
     private native void _resume();
     private native void _stop();

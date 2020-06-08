@@ -2,6 +2,8 @@
     cmake_minimum_required(VERSION 3.6.0)
 
     include_directories(src/main/cpp/include)
+    include_directories(src/main/cpp/soundtouch/include)
+    include_directories(src/main/cpp/soundtouch/sources)
 
     add_library( avcodec-57 SHARED IMPORTED)
     set_target_properties( avcodec-57
@@ -54,6 +56,19 @@
             src/main/cpp/audio/AudioOutput.cpp
             src/main/cpp/audio/AudioPlayerController.cpp
             src/main/cpp/audio/JavaCaller.cpp
+
+            src/main/cpp/soundtouch/sources/AAFilter.cpp
+            src/main/cpp/soundtouch/sources/FIFOSampleBuffer.cpp
+            src/main/cpp/soundtouch/sources/FIRFilter.cpp
+            src/main/cpp/soundtouch/sources/cpu_detect_x86.cpp
+            src/main/cpp/soundtouch/sources/sse_optimized.cpp
+            src/main/cpp/soundtouch/sources/RateTransposer.cpp
+            src/main/cpp/soundtouch/sources/SoundTouch.cpp
+            src/main/cpp/soundtouch/sources/InterpolateCubic.cpp
+            src/main/cpp/soundtouch/sources/InterpolateLinear.cpp
+            src/main/cpp/soundtouch/sources/InterpolateShannon.cpp
+            src/main/cpp/soundtouch/sources/TDStretch.cpp
+            src/main/cpp/soundtouch/sources/PeakFinder.cpp
     )
 
     target_link_libraries(

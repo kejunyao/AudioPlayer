@@ -130,3 +130,21 @@ Java_com_kejunyao_audio_AudioPlayer__1setMute(JNIEnv *env, jobject thiz, jint mu
     }
     playerController->setMute(mute);
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_kejunyao_audio_AudioPlayer__1setPitch(JNIEnv *env, jobject thiz, jfloat pitch) {
+    if (playerController == NULL) {
+        return;
+    }
+    playerController->setPitch(pitch);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_kejunyao_audio_AudioPlayer__1setSpeed(JNIEnv *env, jobject thiz, jfloat speed) {
+    if (playerController == NULL) {
+        return;
+    }
+    playerController->setSpeed(speed);
+}
