@@ -66,6 +66,11 @@ public class AudioPlayer {
         mOnCompleteListener = listener;
     }
 
+    OnVolumeDecibelListener mOnVolumeDecibelListener;
+    public void setOnVolumeDecibelListener(OnVolumeDecibelListener listener) {
+        mOnVolumeDecibelListener = listener;
+    }
+
     private String mSource;
     public void setDataSource(String source) {
         mSource = source;

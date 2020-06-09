@@ -47,10 +47,15 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
                         total
                         );
             }
+            int size = bufferSize * 2 * 2;
+            int db = output->getPCMDecibel(reinterpret_cast<char *>(output->sampleBuffer), size);
+            if (output->javaCaller != NULL) {
+                output->javaCaller->callJavaMethod(true, EVENT_VOLUME_DECIBEL, db, 0);
+            }
             (*output->pcmBufferQueue)->Enqueue(
                     output->pcmBufferQueue,
                     (char *) output->sampleBuffer,
-                    bufferSize * 2 * 2
+                    size
             );
         }
     }
@@ -474,6 +479,21 @@ void AudioOutput::setSpeed(float speed) {
     initSampleBuffer();
     this->speed = speed;
     soundTouch->setTempo(speed);
+}
+
+int AudioOutput::getPCMDecibel(char *pcmData, size_t pcmSize) {
+    int decibel = 0;
+    short int perValue = 0;
+    double sum = 0;
+    for (int i = 0; i < pcmSize; i += 2) {
+        memcpy(&perValue, pcmData + i, 2);
+        sum += abs(perValue);
+    }
+    sum = sum / (pcmSize / 2);
+    if (sum > 0) {
+        decibel = (int) (20.0 * log10(sum));
+    }
+    return decibel;
 }
 
 

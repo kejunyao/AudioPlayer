@@ -4,6 +4,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import androidx.annotation.NonNull;
+import androidx.core.app.NavUtils;
+
 import java.lang.ref.WeakReference;
 
 /**
@@ -24,6 +26,7 @@ class EventHandler extends Handler {
     static final int EVENT_TIME_INFO = 5;
     static final int EVENT_ERROR     = 6;
     static final int EVENT_COMPLETE  = 7;
+    static final int EVENT_VOLUME_DECIBEL  = 8;
 
     private final WeakReference<AudioPlayer> mAudioPlayerRef;
     public EventHandler(AudioPlayer player, Looper looper) {
@@ -52,6 +55,9 @@ class EventHandler extends Handler {
                 break;
             case EVENT_ERROR:
                 onError(msg.arg1);
+                break;
+            case EVENT_VOLUME_DECIBEL:
+                onVolumeDecibel(msg.arg1);
                 break;
             case EVENT_NOP:
                 break;
@@ -109,7 +115,6 @@ class EventHandler extends Handler {
     }
 
     private void onComplete(boolean success) {
-        AudioLog.d("onComplete", "success: ", success);
         AudioPlayer player = mAudioPlayerRef.get();
         if (player != null) {
             if (success) {
@@ -118,6 +123,13 @@ class EventHandler extends Handler {
             if (player.mOnCompleteListener != null) {
                 player.mOnCompleteListener.onComplete();
             }
+        }
+    }
+
+    private void onVolumeDecibel(int decibel) {
+        AudioPlayer player = mAudioPlayerRef.get();
+        if (player != null && player.mOnVolumeDecibelListener != null) {
+            player.mOnVolumeDecibelListener.onVolumeDecibel(decibel);
         }
     }
 

@@ -17,6 +17,7 @@ import com.kejunyao.audio.OnLoadListener;
 import com.kejunyao.audio.OnPauseResumeListener;
 import com.kejunyao.audio.OnPreparedListener;
 import com.kejunyao.audio.OnTimeInfoListener;
+import com.kejunyao.audio.OnVolumeDecibelListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -127,6 +128,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        mAudioPlayer.setOnVolumeDecibelListener(new OnVolumeDecibelListener() {
+            @Override
+            public void onVolumeDecibel(int decibel) {
+                AudioLog.d(TAG, "PCM分贝值：", decibel);
+            }
+        });
     }
 
     private void setVolumeProgress(float percent) {

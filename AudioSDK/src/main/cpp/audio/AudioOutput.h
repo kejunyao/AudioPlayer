@@ -105,6 +105,14 @@ public:
      */
     void setSpeed(float speed);
 
+    /**
+     * 获取PCM数据分贝值
+     * @param pcmData PCM数据
+     * @param pcmSize PCM数据大小
+     * @return PCM数据分贝值
+     */
+    int getPCMDecibel(char *pcmData, size_t pcmSize);
+
     void pause();
 
     void resume();
