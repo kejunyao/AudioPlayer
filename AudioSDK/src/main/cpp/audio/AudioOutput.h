@@ -49,7 +49,6 @@ private:
 private:
     // SoundTouch
     SoundTouch *soundTouch = NULL;
-    SAMPLETYPE *sampleBuffer = NULL;
     uint8_t *outBuffer = NULL;
     float pitch = 1.0f;
     float speed = 1.0f;
@@ -65,6 +64,7 @@ public:
     pthread_t threadPlay;
     // 缓冲器队列接口
     SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
+    SAMPLETYPE *sampleBuffer = NULL;
 
 private:
     int getCurrentSampleRateForOpenSLES(int sampleRate);

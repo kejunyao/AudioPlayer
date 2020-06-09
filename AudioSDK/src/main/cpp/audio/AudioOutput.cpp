@@ -49,8 +49,8 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
             }
             (*output->pcmBufferQueue)->Enqueue(
                     output->pcmBufferQueue,
-                    (char *) output->audio->buffer,
-                    bufferSize
+                    (char *) output->sampleBuffer,
+                    bufferSize * 2 * 2
             );
         }
     }
@@ -278,14 +278,8 @@ void AudioOutput::checkChannels(AVFrame *frame) {
 
 
 int AudioOutput::soundTouchResample() {
+    initSampleBuffer();
     while (playStatus != NULL && !playStatus->isExit()) {
-        if (audio == NULL) {
-            break;
-        }
-        if (audio->sampleRate == 0) {
-            continue;
-        }
-        initSampleBuffer();
         outBuffer = NULL;
         if (finished) {
             finished = false;
@@ -318,8 +312,11 @@ int AudioOutput::soundTouchResample() {
 }
 
 int AudioOutput::resample(void **pcmBuffer) {
-    int bufferSize = 0;
+    dataSize = 0;
     while(playStatus != NULL && !playStatus->isExit()) {
+        if (playStatus->isSeek()) {
+            continue;
+        }
         if (audio == NULL) {
             return 0;
         }
@@ -383,7 +380,7 @@ int AudioOutput::resample(void **pcmBuffer) {
                     avFrame->nb_samples);
 
             int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
-            bufferSize = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+            dataSize = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
 
             audio->nowTime = avFrame->pts * av_q2d(audio->timeBase);
             if(audio->nowTime < audio->clock) {
@@ -409,7 +406,7 @@ int AudioOutput::resample(void **pcmBuffer) {
             continue;
         }
     }
-    return bufferSize;
+    return dataSize;
 }
 
 void AudioOutput::setMute(int mute) {
