@@ -148,3 +148,21 @@ Java_com_kejunyao_audio_AudioPlayer__1setSpeed(JNIEnv *env, jobject thiz, jfloat
     }
     playerController->setSpeed(speed);
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_kejunyao_audio_AudioPlayer__1setRecord(JNIEnv *env, jobject thiz, jboolean should_record) {
+    if (playerController == NULL) {
+        return;
+    }
+    playerController->shouldRecord(should_record);
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_kejunyao_audio_AudioPlayer__1getSampleRate(JNIEnv *env, jobject thiz) {
+    if (playerController == NULL) {
+        return 0;
+    }
+    return playerController->getSampleRate();
+}

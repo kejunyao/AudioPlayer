@@ -19,6 +19,8 @@ import com.kejunyao.audio.OnPreparedListener;
 import com.kejunyao.audio.OnTimeInfoListener;
 import com.kejunyao.audio.OnVolumeDecibelListener;
 
+import java.io.File;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "AudioPlayer_MainActivity";
@@ -185,5 +187,22 @@ public class MainActivity extends AppCompatActivity {
 
     public void pitchSub(View view) {
         mAudioPlayer.setPitch(mAudioPlayer.getPitch() - 0.1f);
+    }
+
+
+    public void startRecord(View view) {
+        mAudioPlayer.startRecord(new File("/sdcard/test789.aac"));
+    }
+
+    public void stopRecord(View view) {
+        mAudioPlayer.stopRecord();
+    }
+
+    public void pauseRecord(View view) {
+        mAudioPlayer.pauseRecord();
+    }
+
+    public void resumeRecord(View view) {
+        mAudioPlayer.resumeRecord();
     }
 }

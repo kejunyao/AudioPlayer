@@ -2,6 +2,8 @@ package com.kejunyao.audio;
 
 import android.os.Looper;
 
+import java.io.File;
+
 /**
  * 音频播放控Controller
  *
@@ -24,6 +26,7 @@ public class AudioPlayer {
     }
 
     private EventHandler mEventHandler;
+    private final AudioRecorder mRecorder;
 
     public AudioPlayer() {
         Looper looper;
@@ -34,6 +37,7 @@ public class AudioPlayer {
         } else {
             mEventHandler = null;
         }
+        mRecorder = new AudioRecorder(this);
     }
 
     OnPreparedListener mOnPreparedListener;
@@ -179,6 +183,26 @@ public class AudioPlayer {
         }
     }
 
+    private void encodecPcmToAAc(int size, byte[] buffer) {
+        mRecorder.encodecPcmToAAc(size, buffer);
+    }
+
+    public void startRecord(File out) {
+        mRecorder.start(out, _getSampleRate());
+    }
+
+    public void stopRecord() {
+        mRecorder.stop();
+    }
+
+    public void pauseRecord() {
+        mRecorder.pause();
+    }
+
+    public void resumeRecord() {
+        mRecorder.resume();
+    }
+
     private native void _prepare(String source);
     private native void _start();
     private native void _seekByPercent(float percent);
@@ -187,6 +211,8 @@ public class AudioPlayer {
     private native void _setMute(int mute);
     private native void _setPitch(float pitch);
     private native void _setSpeed(float speed);
+    native void _setRecord(boolean shouldRecord);
+    private native int _getSampleRate();
     private native void _pause();
     private native void _resume();
     private native void _stop();

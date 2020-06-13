@@ -59,6 +59,14 @@ class AudioPlayerController {
          * @param speed 音速
          */
         void setSpeed(float speed);
+
+        /**
+         * 是否录音
+         * @param shouldRecord true，录音；false，不录音
+         */
+        void shouldRecord(bool shouldRecord);
+
+        int getSampleRate();
 };
 
 

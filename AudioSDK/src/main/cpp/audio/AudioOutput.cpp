@@ -36,10 +36,11 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
     if (output != NULL) {
         int bufferSize = output->soundTouchResample();
         if (bufferSize > 0) {
+            bool hasJavaCaller = output->javaCaller != NULL;
             output->audio->updateClock(bufferSize);
             int current = output->audio->clock;
             int total = output->audio->durationInSecond;
-            if (output->audio->shouldRefresh()) {
+            if (output->audio->shouldRefresh() && hasJavaCaller) {
                 output->javaCaller->callJavaMethod(
                         true,
                         EVENT_TIME_INFO,
@@ -48,8 +49,11 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf, void *context) {
                         );
             }
             int size = bufferSize * 2 * 2;
+            if (hasJavaCaller && output->shouldRecord) {
+                output->javaCaller->encodecPcmToAAc(true, size, output->sampleBuffer);
+            }
             int db = output->getPCMDecibel(reinterpret_cast<char *>(output->sampleBuffer), size);
-            if (output->javaCaller != NULL) {
+            if (hasJavaCaller) {
                 output->javaCaller->callJavaMethod(true, EVENT_VOLUME_DECIBEL, db, 0);
             }
             (*output->pcmBufferQueue)->Enqueue(

@@ -16,6 +16,7 @@ private:
     JNIEnv *jenv = NULL;
     jobject instance;
     jmethodID jmidPostEvent;
+    jmethodID jmidEncodecPcmToAAc;
 public:
     JavaCaller(JavaVM *javaVM, JNIEnv *env, jobject *instance);
     ~JavaCaller();
@@ -28,6 +29,14 @@ public:
      * @param arg2 参数2
      */
     void callJavaMethod(bool isWorkThread, int event, int arg1, int arg2);
+
+    /**
+     * 将PCM编码为AAC
+     * @param isWorkThread true，C++子线程; false，当前线程
+     * @param size 数据大小
+     * @param buffer 数据
+     */
+    void encodecPcmToAAc(bool isWorkThread, int size, void *buffer);
 };
 
 

@@ -35,7 +35,6 @@ void AudioPlayerController::setReleasing(bool isReleasing) {
     pthread_mutex_unlock(&mutexReleasing);
 }
 
-
 bool AudioPlayerController::isWorking() {
     bool result;
     pthread_mutex_lock(&mutexWorking);
@@ -80,14 +79,12 @@ void AudioPlayerController::start() {
     audioDecoder->decodeAsync();
 }
 
-
 void AudioPlayerController::seekByPercent(float percent) {
     if (audioDecoder == NULL) {
         return;
     }
     audioDecoder->seekByPercent(percent);
 }
-
 
 void AudioPlayerController::seek(int second) {
     if (audioDecoder == NULL) {
@@ -142,7 +139,6 @@ void AudioPlayerController::setVolume(float percent) {
     audioOutput->setVolume(percent);
 }
 
-
 void AudioPlayerController::setMute(int mute) {
     if (isReleasing()) {
         return;
@@ -181,6 +177,32 @@ void AudioPlayerController::setSpeed(float speed) {
         return;
     }
     audioOutput->setSpeed(speed);
+}
+
+void AudioPlayerController::shouldRecord(bool shouldRecord) {
+    if (isReleasing()) {
+        return;
+    }
+    if (!isWorking()) {
+        return;
+    }
+    if (audioOutput == NULL) {
+        return;
+    }
+    audioOutput->shouldRecord = shouldRecord;
+}
+
+int AudioPlayerController::getSampleRate() {
+    if (isReleasing()) {
+        return 0;
+    }
+    if (!isWorking()) {
+        return 0;
+    }
+    if (audio == NULL || audio->avCodecContext == NULL) {
+        return 0;
+    }
+    return audio->avCodecContext->sample_rate;
 }
 
 void AudioPlayerController::release() {
