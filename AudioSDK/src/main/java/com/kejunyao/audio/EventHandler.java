@@ -27,6 +27,7 @@ class EventHandler extends Handler {
     static final int EVENT_ERROR     = 6;
     static final int EVENT_COMPLETE  = 7;
     static final int EVENT_VOLUME_DECIBEL  = 8;
+    static final int EVENT_RECORD_TIME  = 9;
 
     private final WeakReference<AudioPlayer> mAudioPlayerRef;
     public EventHandler(AudioPlayer player, Looper looper) {
@@ -58,6 +59,9 @@ class EventHandler extends Handler {
                 break;
             case EVENT_VOLUME_DECIBEL:
                 onVolumeDecibel(msg.arg1);
+                break;
+            case EVENT_RECORD_TIME:
+                onRecordTime(msg.arg1);
                 break;
             case EVENT_NOP:
                 break;
@@ -123,6 +127,7 @@ class EventHandler extends Handler {
             if (player.mOnCompleteListener != null) {
                 player.mOnCompleteListener.onComplete();
             }
+            player.tryPlayNext();
         }
     }
 
@@ -130,6 +135,13 @@ class EventHandler extends Handler {
         AudioPlayer player = mAudioPlayerRef.get();
         if (player != null && player.mOnVolumeDecibelListener != null) {
             player.mOnVolumeDecibelListener.onVolumeDecibel(decibel);
+        }
+    }
+
+    private void onRecordTime(int time) {
+        AudioPlayer player = mAudioPlayerRef.get();
+        if (player != null && player.mOnRecordTimeListener != null) {
+            player.mOnRecordTimeListener.onRecordTime(time);
         }
     }
 

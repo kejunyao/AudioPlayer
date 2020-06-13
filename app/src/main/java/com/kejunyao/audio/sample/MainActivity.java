@@ -16,6 +16,7 @@ import com.kejunyao.audio.OnErrorListener;
 import com.kejunyao.audio.OnLoadListener;
 import com.kejunyao.audio.OnPauseResumeListener;
 import com.kejunyao.audio.OnPreparedListener;
+import com.kejunyao.audio.OnRecordTimeListener;
 import com.kejunyao.audio.OnTimeInfoListener;
 import com.kejunyao.audio.OnVolumeDecibelListener;
 
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar mPlayProgressSeekBar;
     private TextView mVolumeTextView;
     private SeekBar mVolumeSeekBar;
+    private TextView mRecordTimeView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         // mediaPlayer.release();
         // mediaPlayer.setDataSource("");
         mTimeInfoView = findViewById(R.id.time_info);
+        mRecordTimeView = findViewById(R.id.record_time);
         mAudioPlayer.setOnPreparedListener(new OnPreparedListener() {
             @Override
             public void onPrepared() {
@@ -136,6 +139,13 @@ public class MainActivity extends AppCompatActivity {
                 AudioLog.d(TAG, "PCM分贝值：", decibel);
             }
         });
+
+        mAudioPlayer.setOnRecordTimeListener(new OnRecordTimeListener() {
+            @Override
+            public void onRecordTime(int time) {
+                mRecordTimeView.setText("录音时间：" + TimeUtils.timeText(time));
+            }
+        });
     }
 
     private void setVolumeProgress(float percent) {
@@ -204,5 +214,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void resumeRecord(View view) {
         mAudioPlayer.resumeRecord();
+    }
+
+    public void next(View view) {
+        mAudioPlayer.playNext("http://ngcdn001.cnr.cn/live/zgzs/index.m3u8");
     }
 }

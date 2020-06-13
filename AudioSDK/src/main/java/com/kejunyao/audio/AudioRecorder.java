@@ -3,9 +3,17 @@ package com.kejunyao.audio;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
+
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
+
+import androidx.annotation.NonNull;
 
 /**
  * 音频录制器
@@ -15,6 +23,8 @@ import java.nio.ByteBuffer;
  */
 final class AudioRecorder {
 
+    private static final String TAG = "AudioRecorder";
+
     private MediaFormat encoderFormat;
     private MediaCodec encoder;
     private FileOutputStream outputStream;
@@ -23,17 +33,42 @@ final class AudioRecorder {
     private byte[] outByteBuffer;
     private int aacSampleRate = 4;
     private boolean sInit;
+    private int audioSampleRate;
+    private double recordTime;
 
     private final AudioPlayer mPlayer;
+
+    private HandlerThread mHandlerThread;
+    private RecorderHandler mHandler;
 
     public AudioRecorder(AudioPlayer player) {
         mPlayer = player;
     }
 
-    private void init(int sampleRate, File outfile) {
+    private void startRecorderHandler() {
+        if (mHandlerThread == null) {
+            mHandlerThread = new HandlerThread("AudioRecorder_Handler");
+            mHandlerThread.start();
+            mHandler = new RecorderHandler(mHandlerThread.getLooper(), this);
+        }
+    }
+
+    private void releaseRecorderHandler() {
+        if (mHandlerThread != null) {
+            mHandlerThread.quit();
+            mHandlerThread = null;
+            mHandler = null;
+        }
+    }
+
+    private boolean canSendMessage() {
+        return mHandlerThread != null && mHandler != null;
+    }
+
+    private void init() {
         try {
-            aacSampleRate = getADTSSampleRate(sampleRate);
-            encoderFormat = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, sampleRate, 2);
+            aacSampleRate = AudioPlayerUtils.getADTSSampleRate(audioSampleRate);
+            encoderFormat = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, audioSampleRate, 2);
             encoderFormat.setInteger(MediaFormat.KEY_BIT_RATE, 96000);
             encoderFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
             encoderFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096);
@@ -42,17 +77,31 @@ final class AudioRecorder {
             if (encoder == null) {
                 return;
             }
+            recordTime = 0;
             encoder.configure(encoderFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-            outputStream = new FileOutputStream(outfile);
+            outputStream = new FileOutputStream(mFile);
             encoder.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void encodecPcmToAAc(int size, byte[] buffer) {
-        AudioLog.d("AudioRecorder", "encodecPcmToAAc, size: ", size, ", buffer.length: ", buffer.length);
+    void encodecPcmToAAc(int size, byte[] buffer) {
+        if (!canSendMessage()) {
+            return;
+        }
+        Message message = mHandler.obtainMessage();
+        message.what = RecorderHandler.MSG_PCM_TO_AAC;
+        message.obj = buffer;
+        message.arg1 = size;
+        message.sendToTarget();
+    }
+
+    private void handlePCMToAAC(int size, byte[] buffer) {
+        AudioLog.d(TAG, "encodecPcmToAAc, size: ", size, ", buffer.length: ", buffer.length);
         if (buffer != null && encoder != null) {
+            recordTime += size * 1.0 / (audioSampleRate * 2 * (16 / 8));
+            mPlayer.onRecordTime((int) recordTime);
             int inputBufferIndex = encoder.dequeueInputBuffer(0);
             if (inputBufferIndex >= 0) {
                 ByteBuffer byteBuffer = encoder.getInputBuffers()[inputBufferIndex];
@@ -71,7 +120,7 @@ final class AudioRecorder {
                     byteBuffer.position(info.offset);
                     byteBuffer.limit(info.offset + info.size);
 
-                    addADtsHeader(outByteBuffer, perPCMSize, aacSampleRate);
+                    AudioPlayerUtils.addADtsHeader(outByteBuffer, perPCMSize, aacSampleRate);
 
                     byteBuffer.get(outByteBuffer, 7, info.size);
                     byteBuffer.position(info.offset);
@@ -87,128 +136,208 @@ final class AudioRecorder {
         }
     }
 
-    private void addADtsHeader(byte[] packet, int packetLen, int sampleRate) {
-        int profile = 2; // AAC LC
-        int freqIdx = sampleRate; // sampleRate
-        int chanCfg = 2; // CPE
-
-        packet[0] = (byte) 0xFF; // 0xFFF(12bit) 这里只取了8位，所以还差4位放到下一个里面
-        packet[1] = (byte) 0xF9; // 第一个t位放F
-        packet[2] = (byte) (((profile - 1) << 6) + (freqIdx << 2) + (chanCfg >> 2));
-        packet[3] = (byte) (((chanCfg & 3) << 6) + (packetLen >> 11));
-        packet[4] = (byte) ((packetLen & 0x7FF) >> 3);
-        packet[5] = (byte) (((packetLen & 7) << 5) + 0x1F);
-        packet[6] = (byte) 0xFC;
-    }
-
-    private int getADTSSampleRate(int sampleRate) {
-        int rate = 4;
-        switch (sampleRate) {
-            case 96000:
-                rate = 0;
-                break;
-            case 88200:
-                rate = 1;
-                break;
-            case 64000:
-                rate = 2;
-                break;
-            case 48000:
-                rate = 3;
-                break;
-            case 44100:
-                rate = 4;
-                break;
-            case 32000:
-                rate = 5;
-                break;
-            case 24000:
-                rate = 6;
-                break;
-            case 22050:
-                rate = 7;
-                break;
-            case 16000:
-                rate = 8;
-                break;
-            case 12000:
-                rate = 9;
-                break;
-            case 11025:
-                rate = 10;
-                break;
-            case 8000:
-                rate = 11;
-                break;
-            case 7350:
-                rate = 12;
-                break;
-        }
-        return rate;
-    }
-
     private void release() {
+        if (!canSendMessage()) {
+            return;
+        }
+        sendMessage(RecorderHandler.MSG_RELEASE);
+    }
+
+    private void handleRelease() {
         if (encoder == null) {
             return;
         }
+        recordTime = 0;
         try {
             outputStream.close();
             outputStream = null;
-            encoder.stop();
-            encoder.release();
-            encoder = null;
-            encoderFormat = null;
-            info = null;
-            sInit = false;
-            AudioLog.d("AudioRecorder", "录制完成。");
         } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             if (outputStream != null) {
                 try {
                     outputStream.close();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                } finally {
+                    outputStream = null;
                 }
-                outputStream = null;
             }
         }
+        try {
+            encoder.stop();
+            encoder.release();
+        } catch (Exception e) {
+        }
+        encoder = null;
+        encoderFormat = null;
+        info = null;
+        sInit = false;
+        releaseRecorderHandler();
+        AudioLog.d(TAG, "录制完成。");
+    }
+
+    void start(File file, int sampleRate) {
+        startRecorderHandler();
+        Message msg = mHandler.obtainMessage();
+        msg.what = RecorderHandler.MSG_START;
+        msg.arg1 = sampleRate;
+        msg.obj = file;
+        msg.sendToTarget();
     }
 
     private File mFile;
 
-    void start(File file, int sampleRate) {
+    private void handleStart(File file, int sampleRate) {
         if (mFile != null && mFile.getAbsolutePath().equals(file.getAbsolutePath())) {
             return;
         }
         mFile = file;
         if (!sInit) {
+            audioSampleRate = sampleRate;
             if (sampleRate > 0) {
                 sInit = true;
-                init(sampleRate, mFile);
+                init();
                 mPlayer._setRecord(true);
-                AudioLog.d("AudioRecorder", "开始录制, sampleRate: ", sampleRate);
+                AudioLog.d(TAG, "开始录制, sampleRate: ", sampleRate);
                 return;
             }
         }
     }
 
-    public void stop() {
+    void stop() {
+        if (!canSendMessage()) {
+            return;
+        }
+        sendMessage(RecorderHandler.MSG_STOP);
+    }
+
+    private void handleStop() {
         if (sInit) {
             mPlayer._setRecord(false);
             release();
             sInit = false;
-            AudioLog.d("AudioRecorder", "完成录制");
+            AudioLog.d(TAG, "完成录制");
         }
     }
 
-    public void pause() {
-        mPlayer._setRecord(false);
-        AudioLog.d("AudioRecorder", "暂停录制");
+    void pause() {
+        if (!canSendMessage()) {
+            return;
+        }
+        sendMessage(RecorderHandler.MSG_PAUSE);
     }
 
-    public void resume() {
+    private void handlePause() {
+        mPlayer._setRecord(false);
+        AudioLog.d(TAG, "暂停录制");
+    }
+
+    void resume() {
+        if (!canSendMessage()) {
+            return;
+        }
+        sendMessage(RecorderHandler.MSG_RESUME);
+    }
+
+    private void handleResume() {
         mPlayer._setRecord(true);
-        AudioLog.d("AudioRecorder", "继续录制");
+        AudioLog.d(TAG, "继续录制");
+    }
+
+    private void sendMessage(int what) {
+        Message message = mHandler.obtainMessage();
+        message.what = what;
+        message.sendToTarget();
+    }
+
+    private static class RecorderHandler extends Handler {
+
+        private static final int MSG_START      = 1;
+        private static final int MSG_PCM_TO_AAC = 2;
+        private static final int MSG_PAUSE      = 3;
+        private static final int MSG_RESUME     = 4;
+        private static final int MSG_STOP       = 5;
+        private static final int MSG_RELEASE    = 6;
+
+        private final WeakReference<AudioRecorder> playerReference;
+
+        public RecorderHandler(@NonNull Looper looper, AudioRecorder recorder) {
+            super(looper);
+            playerReference = new WeakReference<>(recorder);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            switch (msg.what) {
+                case MSG_START: {
+                    start(msg);
+                    break;
+                }
+                case MSG_PCM_TO_AAC: {
+                    pcmToAAC(msg);
+                    break;
+                }
+                case MSG_PAUSE: {
+                    pause();
+                    break;
+                }
+                case MSG_RESUME: {
+                    resume();
+                    break;
+                }
+                case MSG_STOP: {
+                    stop();
+                    break;
+                }
+                case MSG_RELEASE: {
+                    release();
+                    break;
+                }
+                default:
+                    AudioLog.e(TAG, "unknow msg what: ", msg.what);
+                    break;
+            }
+        }
+
+        private void start(Message msg) {
+            AudioRecorder recorder = playerReference.get();
+            if (recorder != null && (msg.obj instanceof File)) {
+                recorder.handleStart((File) msg.obj, msg.arg1);
+            }
+        }
+
+        private void pcmToAAC(Message msg) {
+            AudioRecorder recorder = playerReference.get();
+            if (recorder != null && (msg.obj instanceof byte[])) {
+                recorder.handlePCMToAAC(msg.arg1, (byte[]) msg.obj);
+            }
+        }
+
+        private void pause() {
+            AudioRecorder recorder = playerReference.get();
+            if (recorder != null) {
+                recorder.handlePause();
+            }
+        }
+
+        private void resume() {
+            AudioRecorder recorder = playerReference.get();
+            if (recorder != null) {
+                recorder.handleResume();
+            }
+        }
+
+        private void stop() {
+            AudioRecorder recorder = playerReference.get();
+            if (recorder != null) {
+                recorder.handleStop();
+            }
+        }
+
+        private void release() {
+            AudioRecorder recorder = playerReference.get();
+            if (recorder != null) {
+                recorder.handleRelease();
+            }
+        }
     }
 }

@@ -106,9 +106,9 @@ void AudioOutput::initOpenSLES() {
     };
     SLDataSource slDataSource = {&android_queue, &pcm};
 
-    const int LENGTH = 3;
-    const SLInterfaceID ids[LENGTH] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_MUTESOLO};
-    const SLboolean req[LENGTH] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    const int LENGTH = 4;
+    const SLInterfaceID ids[LENGTH] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_PLAYBACKRATE, SL_IID_MUTESOLO};
+    const SLboolean req[LENGTH] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
     (*engineEngine)->CreateAudioPlayer(
             engineEngine,

@@ -21,7 +21,7 @@ public final class TimeUtils {
         return String.format("%1$s / %2$s", timeText(currentTime), timeText(totalTime));
     }
 
-    private static String timeText(int second) {
+    public static String timeText(int second) {
         int hours = second / (60 * 60);
         int minutes = (second % (60 * 60)) / (60);
         int seconds = second % 60;

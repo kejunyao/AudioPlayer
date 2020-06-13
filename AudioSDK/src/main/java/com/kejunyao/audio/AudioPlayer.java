@@ -28,6 +28,7 @@ public class AudioPlayer {
     private EventHandler mEventHandler;
     private final AudioRecorder mRecorder;
 
+
     public AudioPlayer() {
         Looper looper;
         if ((looper = Looper.myLooper()) != null) {
@@ -73,6 +74,11 @@ public class AudioPlayer {
     OnVolumeDecibelListener mOnVolumeDecibelListener;
     public void setOnVolumeDecibelListener(OnVolumeDecibelListener listener) {
         mOnVolumeDecibelListener = listener;
+    }
+
+    OnRecordTimeListener mOnRecordTimeListener;
+    public void setOnRecordTimeListener(OnRecordTimeListener listener) {
+        mOnRecordTimeListener = listener;
     }
 
     private String mSource;
@@ -165,7 +171,22 @@ public class AudioPlayer {
         }
     }
 
+    private boolean mPlayNext;
+    public void playNext(String source) {
+        mPlayNext = true;
+        mSource = source;
+        stop();
+    }
+
+    void tryPlayNext() {
+        if (mPlayNext) {
+            mPlayNext = false;
+            prepare();
+        }
+    }
+
     public void stop() {
+        stopRecord();
         _stop();
         _release();
     }
@@ -201,6 +222,12 @@ public class AudioPlayer {
 
     public void resumeRecord() {
         mRecorder.resume();
+    }
+
+    void onRecordTime(int time) {
+        if (mOnRecordTimeListener != null) {
+            postEventFromNative(EventHandler.EVENT_RECORD_TIME, time, 0);
+        }
     }
 
     private native void _prepare(String source);
