@@ -162,4 +162,9 @@
             android:onClick="resumeRecord"
             android:text="继续录音"/>
     </LinearLayout>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="播放APE"
+        android:onClick="playApe"/>
 </LinearLayout>

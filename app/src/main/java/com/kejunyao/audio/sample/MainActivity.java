@@ -219,4 +219,10 @@ public class MainActivity extends AppCompatActivity {
     public void next(View view) {
         mAudioPlayer.playNext("http://ngcdn001.cnr.cn/live/zgzs/index.m3u8");
     }
+
+    public void playApe(View view) {
+        mAudioPlayer.setDataSource("/sdcard/zoukai.ape");
+        mAudioPlayer.prepare();
+    }
+    //zoukai.ape
 }

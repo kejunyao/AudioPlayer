@@ -39,6 +39,7 @@ void Audio::release() {
         free(buffer);
         buffer = NULL;
     }
+
     if (queue != NULL) {
         queue->clear();
         delete(queue);

@@ -179,9 +179,11 @@ void AudioDecoder::decode() {
             break;
         }
         if (playStatus->isSeek()) {
+            av_usleep(1000 * 100);
             continue;
         }
-        if (audio->queue->size() > 40) {
+        if (audio->queue->size() > 1) {
+            av_usleep(1000 * 100);
             continue;
         }
         AVPacket *avPacket = av_packet_alloc();
@@ -199,6 +201,7 @@ void AudioDecoder::decode() {
             avPacket = NULL;
             while (playStatus != NULL && !playStatus->isExit()) {
                 if (audio != NULL && audio->queue != NULL && audio->queue->size() > 0) {
+                    av_usleep(1000 * 100);
                     continue;
                 }
                 playStatus->setExit(true);
@@ -272,6 +275,7 @@ void AudioDecoder::seek(int64_t second) {
     audio->reset();
     pthread_mutex_lock(&mutexSeek);
     int64_t rel = second * AV_TIME_BASE;
+    avcodec_flush_buffers(audio->avCodecContext);
     avformat_seek_file(avFormatContext, -1, INT64_MIN, rel, INT64_MAX, 0);
     pthread_mutex_unlock(&mutexSeek);
     playStatus->setSeek(false);

@@ -23,6 +23,7 @@ extern "C" {
     #include <libswresample/swresample.h>
     #include <SLES/OpenSLES.h>
     #include <SLES/OpenSLES_Android.h>
+    #include <libavutil/time.h>
 };
 
 class AudioOutput {
@@ -45,6 +46,7 @@ private:
     // 音道
     SLMuteSoloItf  pcmMutePlay = NULL;
     int mute = 2;
+    bool readFrameFinished = true;
 
 private:
     // SoundTouch

@@ -5,6 +5,7 @@
  * @since 2020年05月30日
  */
 
+
 #include "AudioOutput.h"
 
 AudioOutput::AudioOutput(JavaCaller *javaCaller, PlayStatus *playStatus, Audio *audio) {
@@ -324,6 +325,7 @@ int AudioOutput::resample(void **pcmBuffer) {
     dataSize = 0;
     while(playStatus != NULL && !playStatus->isExit()) {
         if (playStatus->isSeek()) {
+            av_usleep(1000 * 100);
             continue;
         }
         if (audio == NULL) {
@@ -334,6 +336,7 @@ int AudioOutput::resample(void **pcmBuffer) {
                 playStatus->setLoad(true);
                 javaCaller->callJavaMethod(true, EVENT_LOADING, 0, 0);
             }
+            av_usleep(1000 * 100);
             continue;
         } else{ // 加载完成
             if(playStatus->isLoad()) {
@@ -341,23 +344,28 @@ int AudioOutput::resample(void **pcmBuffer) {
                 javaCaller->callJavaMethod(true, EVENT_LOADING, 1, 0);
             }
         }
-        AVPacket *avPacket = av_packet_alloc();
-        if(audio->queue->pop(avPacket) != 0) {
-            av_packet_free(&avPacket);
-            av_free(avPacket);
-            avPacket = NULL;
-            continue;
-        }
-        int ret = avcodec_send_packet(audio->avCodecContext, avPacket);
-        if(ret != 0) {
-            av_packet_free(&avPacket);
-            av_free(avPacket);
-            avPacket = NULL;
-            continue;
+        int ret;
+        AVPacket *avPacket = NULL;
+        if (readFrameFinished) {
+            avPacket = av_packet_alloc();
+            if(audio->queue->pop(avPacket) != 0) {
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+                avPacket = NULL;
+                continue;
+            }
+            ret = avcodec_send_packet(audio->avCodecContext, avPacket);
+            if(ret != 0) {
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+                avPacket = NULL;
+                continue;
+            }
         }
         AVFrame *avFrame = av_frame_alloc();
         ret = avcodec_receive_frame(audio->avCodecContext, avFrame);
         if(ret == 0) {
+            readFrameFinished = false;
             checkChannels(avFrame);
             SwrContext *swr_ctx;
             swr_ctx = swr_alloc_set_opts(
@@ -370,14 +378,17 @@ int AudioOutput::resample(void **pcmBuffer) {
                     avFrame->sample_rate,
                     NULL, NULL
             );
-            if(!swr_ctx || swr_init(swr_ctx) <0) {
-                av_packet_free(&avPacket);
-                av_free(avPacket);
-                avPacket = NULL;
+            if(!swr_ctx || swr_init(swr_ctx) < 0) {
+                if (avPacket != NULL) {
+                    av_packet_free(&avPacket);
+                    av_free(avPacket);
+                    avPacket = NULL;
+                }
                 av_frame_free(&avFrame);
                 av_free(avFrame);
                 avFrame = NULL;
                 swr_free(&swr_ctx);
+                readFrameFinished = true;
                 continue;
             }
 
@@ -397,18 +408,21 @@ int AudioOutput::resample(void **pcmBuffer) {
             }
             audio->clock = audio->nowTime;
             *pcmBuffer = audio->buffer;
-            av_packet_free(&avPacket);
-            av_free(avPacket);
-            avPacket = NULL;
+//            av_packet_free(&avPacket);
+//            av_free(avPacket);
+//            avPacket = NULL;
             av_frame_free(&avFrame);
             av_free(avFrame);
             avFrame = NULL;
             swr_free(&swr_ctx);
             break;
         } else{
-            av_packet_free(&avPacket);
-            av_free(avPacket);
-            avPacket = NULL;
+            readFrameFinished = true;
+            if (avPacket != NULL) {
+                av_packet_free(&avPacket);
+                av_free(avPacket);
+                avPacket = NULL;
+            }
             av_frame_free(&avFrame);
             av_free(avFrame);
             avFrame = NULL;
@@ -464,6 +478,17 @@ void AudioOutput::release() {
     }
     if (pcmMutePlay != NULL) {
         pcmMutePlay = NULL;
+    }
+    if (outBuffer != NULL) {
+        outBuffer = NULL;
+    }
+    if (soundTouch != NULL) {
+        delete(soundTouch);
+        soundTouch = NULL;
+    }
+    if (sampleBuffer != NULL) {
+        free(sampleBuffer);
+        sampleBuffer = NULL;
     }
 }
 
