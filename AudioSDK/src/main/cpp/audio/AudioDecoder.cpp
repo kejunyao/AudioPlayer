@@ -182,7 +182,7 @@ void AudioDecoder::decode() {
             av_usleep(1000 * 100);
             continue;
         }
-        if (audio->queue->size() > 1) {
+        if (audio->queue->size() > 40) {
             av_usleep(1000 * 100);
             continue;
         }

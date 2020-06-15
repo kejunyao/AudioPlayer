@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import androidx.annotation.NonNull;
 
@@ -24,6 +25,8 @@ import androidx.annotation.NonNull;
 final class AudioRecorder {
 
     private static final String TAG = "AudioRecorder";
+
+    private static final int MAX_BUFFER_SIZE = 4096;
 
     private MediaFormat encoderFormat;
     private MediaCodec encoder;
@@ -71,7 +74,7 @@ final class AudioRecorder {
             encoderFormat = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, audioSampleRate, 2);
             encoderFormat.setInteger(MediaFormat.KEY_BIT_RATE, 96000);
             encoderFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
-            encoderFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096);
+            encoderFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, MAX_BUFFER_SIZE);
             encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
             info = new MediaCodec.BufferInfo();
             if (encoder == null) {
@@ -98,7 +101,27 @@ final class AudioRecorder {
     }
 
     private void handlePCMToAAC(int size, byte[] buffer) {
-        AudioLog.d(TAG, "encodecPcmToAAc, size: ", size, ", buffer.length: ", buffer.length);
+        if (size > MAX_BUFFER_SIZE) {
+            int num = size / MAX_BUFFER_SIZE;
+            for (int i = 0; i < num; i++) {
+                int from = i * MAX_BUFFER_SIZE;
+                int to = from + MAX_BUFFER_SIZE;
+                byte[] subBuffer = Arrays.copyOfRange(buffer, from, to);
+                pcmToAac(MAX_BUFFER_SIZE, subBuffer);
+            }
+            int last = size % MAX_BUFFER_SIZE;
+            if (last > 0) {
+                int from = num * MAX_BUFFER_SIZE;
+                int to = from + last;
+                byte[] subBuffer = Arrays.copyOfRange(buffer, from, to);
+                pcmToAac(MAX_BUFFER_SIZE, subBuffer);
+            }
+        } else {
+            pcmToAac(size, buffer);
+        }
+    }
+
+    private void pcmToAac(int size, byte[] buffer) {
         if (buffer != null && encoder != null) {
             recordTime += size * 1.0 / (audioSampleRate * 2 * (16 / 8));
             mPlayer.onRecordTime((int) recordTime);
